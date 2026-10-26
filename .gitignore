@@ -1,0 +1,18 @@
+# Scan output and reports: may contain real vulnerability details
+out/
+reports/
+*.sarif
+findings.json
+
+# Real target allowlist (the example file is committed)
+config/targets.yml
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
