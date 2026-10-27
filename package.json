@@ -1,0 +1,25 @@
+{
+  "name": "ai-secure-audit",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Free, open-source security check for apps built with AI. Runs pinned open-source scanners; no AI needed to run.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "bin": {
+    "ai-secure-audit": "bin/ai-secure-audit.js"
+  },
+  "files": [
+    "bin/",
+    "src/",
+    "rules/",
+    "skills/",
+    "tools.lock.json"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "node --test test/",
+    "update-lock": "node scripts/update-lock.mjs"
+  }
+}

@@ -1,0 +1,201 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Audit finding",
+  "type": "object",
+  "required": [
+    "id",
+    "title",
+    "status",
+    "verification",
+    "source",
+    "evidence",
+    "severity"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^AUD-[0-9]{3,}$"
+    },
+    "title": {
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "Open",
+        "Fixed",
+        "Retested",
+        "Accepted",
+        "False positive"
+      ]
+    },
+    "verification": {
+      "enum": [
+        "unverified",
+        "confirmed",
+        "false-positive",
+        "needs-human"
+      ]
+    },
+    "verification_note": {
+      "type": "string"
+    },
+    "source": {
+      "type": "object",
+      "required": [
+        "kind"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "tool",
+            "manual-review",
+            "test"
+          ]
+        },
+        "tool": {
+          "type": "string"
+        },
+        "tool_version": {
+          "type": "string"
+        },
+        "rule_id": {
+          "type": "string"
+        }
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "properties": {
+          "location": {
+            "type": "string",
+            "description": "file:line, URL, or test name"
+          },
+          "detail": {
+            "type": "string",
+            "description": "redacted output, request/response, or failing assertion"
+          }
+        },
+        "required": [
+          "location"
+        ]
+      }
+    },
+    "severity": {
+      "type": "object",
+      "properties": {
+        "tool": {
+          "type": "string",
+          "description": "as reported, e.g. 'HIGH' or 'CVSS-B 7.5'"
+        },
+        "contextual": {
+          "enum": [
+            "Critical",
+            "High",
+            "Medium",
+            "Low",
+            "Note"
+          ]
+        },
+        "likelihood": {
+          "enum": [
+            "LOW",
+            "MEDIUM",
+            "HIGH"
+          ]
+        },
+        "impact": {
+          "enum": [
+            "LOW",
+            "MEDIUM",
+            "HIGH"
+          ]
+        },
+        "rationale": {
+          "type": "string"
+        },
+        "normalized": {
+          "enum": [
+            "critical",
+            "high",
+            "medium",
+            "low",
+            "info"
+          ],
+          "description": "tool severity mapped to one scale by the CLI"
+        }
+      }
+    },
+    "impact": {
+      "type": "string"
+    },
+    "fix": {
+      "type": "string"
+    },
+    "references": {
+      "type": "object",
+      "properties": {
+        "cwe": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^CWE-[0-9]+$"
+          }
+        },
+        "asvs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+-"
+          }
+        },
+        "owasp_api": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "masvs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "commit": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "fingerprint": {
+      "type": "string",
+      "description": "stable key used by retest to match the same finding across runs"
+    },
+    "category": {
+      "enum": [
+        "secret",
+        "dependency",
+        "config",
+        "code",
+        "authz",
+        "logic"
+      ]
+    }
+  }
+}
