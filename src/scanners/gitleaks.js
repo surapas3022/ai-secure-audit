@@ -1,4 +1,4 @@
-import { writeFileSync } from 'node:fs';
+import { existsSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { rel } from '../paths.js';
 
@@ -48,7 +48,13 @@ export default {
       if (leak.Commit) g.commits.add(leak.Commit.slice(0, 7));
       groups.set(key, g);
     }
-    return [...groups].map(([key, { leak, file, commits }]) => ({
+    const fileExists = ctx.fileExists ?? ((f) => existsSync(join(ctx.root, f)));
+    return [...groups].map(([key, { leak, file, commits }]) => {
+      const commitList = [...commits].sort();
+      // A secret in a file that no longer exists is only in git history. Say so: people look for the file and
+      // cannot find it, then think the tool is wrong.
+      const historyOnly = ctx.isGit !== false && !fileExists(file);
+      return {
       fingerprint: key,
       category: 'secret',
       title: `Secret in code: ${leak.RuleID}`,
@@ -57,12 +63,14 @@ export default {
       evidence: [{
         location: `${file}:${leak.StartLine}`,
         // Never copy Match, Secret, Author or Email: they hold the secret or personal data.
-        detail: [leak.Description, commits.size ? `In git history: ${[...commits].sort().join(', ')}` : '']
-          .filter(Boolean).join(' '),
+        detail: leak.Description,
+        ...(commitList.length ? { commits: commitList } : {}),
+        ...(historyOnly ? { history_only: true } : {}),
       }],
       fix: 'Revoke or rotate this key at the provider first. Then remove it from the code and load it from an ' +
         'environment variable on the server. Deleting it from the code is not enough: it stays in git history.',
       references: { cwe: ['CWE-798'] },
-    }));
+      };
+    });
   },
 };

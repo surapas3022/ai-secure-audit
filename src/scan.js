@@ -7,7 +7,10 @@ import gitleaks from './scanners/gitleaks.js';
 import osv from './scanners/osv.js';
 import trivy from './scanners/trivy.js';
 
-export const BASIC_SCANNERS = [gitleaks, osv, trivy];
+// Scanners are released one at a time, each after passing its own tests (see CLAUDE.md).
+// osv-scanner and trivy are implemented and tested but stay off until v0.2 and v0.3.
+export const BASIC_SCANNERS = [gitleaks];
+export const UPCOMING_SCANNERS = [osv, trivy];
 
 function git(root, args) {
   const r = spawnSync('git', ['-C', root, ...args], { encoding: 'utf8' });
@@ -75,8 +78,8 @@ export async function scan(target, { log = () => {}, version }) {
     target: { git: isGit, commit: ctx.commit, uncommitted_changes: ctx.dirty },
     tools: runs,
     notes: [
-      'Vulnerability databases are updated daily, so dependency results can change without any code change.',
       'Not checked by this tool: whether one user can reach another user\'s data, business rules, and anything running on a server.',
+      `Not checked yet in this version: vulnerable libraries (osv-scanner, coming in v0.2) and Docker/config files (trivy, coming in v0.3).`,
     ],
     findings: sortAndNumber(findings),
   };

@@ -42,6 +42,14 @@ git clone https://github.com/surapas3022/ai-secure-audit.git
 node ai-secure-audit/bin/ai-secure-audit.js /path/to/your/project
 ```
 
+To see what it finds without scanning a real project, build the fake demo app first (every key in it is random
+and fake):
+
+```bash
+node ai-secure-audit/examples/vulnerable-app/setup.mjs /tmp/demo-app
+node ai-secure-audit/bin/ai-secure-audit.js /tmp/demo-app
+```
+
 Or ask your AI assistant: *"Run `node <path-to>/ai-secure-audit/bin/ai-secure-audit.js` on this project, explain the
 results in simple words, and help me fix the most serious ones first."*
 
@@ -65,15 +73,18 @@ docs/         design notes
 
 ### Basic check: works right after `git clone`
 
+Checks are released one at a time, each after passing its own tests. The version in brackets is when each one is
+switched on.
+
 For anyone who builds apps with AI and wants to check their own project. You do not need Docker, Homebrew, Python
 or Java. The tools are single files for Windows, macOS and Linux, downloaded at pinned versions and checked against
 SHA-256 checksums. The check reads only your project folder and never uploads your code.
 
 | Checks | Tool | License |
 |---|---|---|
-| Passwords, API keys and tokens in the code or git history | gitleaks | MIT |
-| Libraries with known vulnerabilities | osv-scanner (offline database) | Apache-2.0 |
-| Dockerfile and config mistakes | trivy config | Apache-2.0 |
+| Passwords, API keys and tokens in the code or git history (v0.1) | gitleaks | MIT |
+| Libraries with known vulnerabilities (v0.2) | osv-scanner (offline database) | Apache-2.0 |
+| Dockerfile and config mistakes (v0.3) | trivy config | Apache-2.0 |
 | Code mistakes AI-generated apps often make (see below), planned | opengrep + this kit's own rules | LGPL-2.1 (rules: Apache-2.0) |
 
 Common mistakes the kit's own rules look for: secret keys in frontend code or `NEXT_PUBLIC_*` variables, Supabase

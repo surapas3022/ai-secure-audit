@@ -1,5 +1,6 @@
 import { countBySeverity } from './findings.js';
 
+// Plain-language explanations, by finding category.
 const PLAIN = {
   secret: {
     what: 'A password, API key or token is written in your code.',
@@ -17,6 +18,17 @@ const PLAIN = {
 
 function where(f) {
   return f.evidence.map((e) => `\`${e.location}\``).join(', ');
+}
+
+function whereSentence(f) {
+  return f.evidence.map((e) => {
+    const commits = e.commits?.length ? ` (commit ${e.commits.join(', ')})` : '';
+    if (e.history_only) {
+      return `\`${e.location}\`. This file is no longer in your project, but it is still in git history${commits}, ` +
+        'so anyone with a copy of the repository can still read it';
+    }
+    return `\`${e.location}\`${commits}`;
+  }).join('; ');
 }
 
 export function reportMarkdown(result, date) {
@@ -47,7 +59,7 @@ export function reportMarkdown(result, date) {
       const p = PLAIN[f.category] ?? {};
       lines.push(`### ${f.id}: ${f.title}`);
       lines.push('');
-      if (p.what) lines.push(`**What is wrong:** ${p.what} Found at ${where(f)}.`);
+      if (p.what) lines.push(`**What is wrong:** ${p.what} Found at ${whereSentence(f)}.`);
       if (p.why) lines.push(`**Why it matters:** ${p.why}`);
       if (f.fix) lines.push(`**How to fix it:** ${f.fix}`);
       lines.push('');
@@ -63,7 +75,8 @@ export function reportMarkdown(result, date) {
     lines.push('| ID | Severity | Type | Problem | Where |');
     lines.push('|---|---|---|---|---|');
     for (const f of findings) {
-      lines.push(`| ${f.id} | ${f.severity.normalized} | ${f.category} | ${f.title.replace(/\|/g, '\\|')} | ${where(f)} |`);
+      const note = f.evidence.some((e) => e.history_only) ? ' (git history only)' : '';
+      lines.push(`| ${f.id} | ${f.severity.normalized} | ${f.category} | ${f.title.replace(/\|/g, '\\|')} | ${where(f)}${note} |`);
     }
     lines.push('');
   }
@@ -74,6 +87,7 @@ export function reportMarkdown(result, date) {
   lines.push('- Business rules: prices, coupons, approvals, payments');
   lines.push('- Database rules such as Supabase row-level security or Firebase security rules (planned)');
   lines.push('- Anything about the live server or website');
+  lines.push('- Libraries with known vulnerabilities, and Docker/config mistakes: not in this version yet (coming in v0.2 and v0.3)');
   lines.push('');
   lines.push('## Tools');
   lines.push('');
@@ -97,7 +111,8 @@ export function consoleSummary(result, outRel) {
     '- Explain them to the user in plain language, most serious first.',
     '- Ask before changing code. Fix one finding at a time; run `npx ai-secure-audit retest` after.',
     '- A leaked secret must be rotated at the provider. Deleting it from the code is not enough.',
-    '- Not checked: whether one user can reach another user\'s data, and business rules. Say so.',
+    '- Not checked: whether one user can reach another user\'s data, business rules, and (in this version)',
+    '  vulnerable libraries and Docker/config files. Say so.',
     ...(failed.length ? ['- Some tools did not run (see NOT RUN above). Tell the user the check is incomplete.'] : []),
     '- For deeper review, see the skills: npx ai-secure-audit init',
   ].join('\n');
