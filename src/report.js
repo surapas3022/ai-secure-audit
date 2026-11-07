@@ -114,6 +114,5 @@ export function consoleSummary(result, outRel) {
     '- Not checked: whether one user can reach another user\'s data, business rules, and (in this version)',
     '  vulnerable libraries and Docker/config files. Say so.',
     ...(failed.length ? ['- Some tools did not run (see NOT RUN above). Tell the user the check is incomplete.'] : []),
-    '- For deeper review, see the skills: npx ai-secure-audit init',
   ].join('\n');
 }

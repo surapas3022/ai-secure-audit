@@ -17,31 +17,6 @@ const TOOLS = {
       return { name: `gitleaks_${v}_${o}_${arch}.${os === 'win32' ? 'zip' : 'tar.gz'}`, binary: os === 'win32' ? 'gitleaks.exe' : 'gitleaks' };
     },
   },
-  'osv-scanner': {
-    repo: 'google/osv-scanner',
-    version: '2.7.0',
-    license: 'Apache-2.0',
-    checksums: () => 'osv-scanner_SHA256SUMS',
-    asset(v, os, arch) {
-      const a = { x64: 'amd64', arm64: 'arm64' }[arch];
-      const o = { darwin: 'darwin', linux: 'linux', win32: 'windows' }[os];
-      const name = `osv-scanner_${o}_${a}${os === 'win32' ? '.exe' : ''}`;
-      return { name, binary: name };
-    },
-  },
-  trivy: {
-    repo: 'aquasecurity/trivy',
-    version: '0.76.1',
-    license: 'Apache-2.0',
-    checksums: (v) => `trivy_${v}_checksums.txt`,
-    asset(v, os, arch) {
-      // No Windows arm64 build; Windows on Arm runs the x64 binary.
-      if (os === 'win32') return { name: `trivy_${v}_windows-64bit.zip`, binary: 'trivy.exe' };
-      const o = { darwin: 'macOS', linux: 'Linux' }[os];
-      const a = { x64: '64bit', arm64: 'ARM64' }[arch];
-      return { name: `trivy_${v}_${o}-${a}.tar.gz`, binary: 'trivy' };
-    },
-  },
 };
 
 function archiveKind(name) {

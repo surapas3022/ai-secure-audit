@@ -4,13 +4,10 @@ import { join, resolve } from 'node:path';
 import { cacheDir, ensureTool, lockedTools } from './tools.js';
 import { sortAndNumber } from './findings.js';
 import gitleaks from './scanners/gitleaks.js';
-import osv from './scanners/osv.js';
-import trivy from './scanners/trivy.js';
 
 // Scanners are released one at a time, each after passing its own tests (see CLAUDE.md).
-// osv-scanner and trivy are implemented and tested but stay off until v0.2 and v0.3.
+// Scanners still in development are kept outside this repository until they pass.
 export const BASIC_SCANNERS = [gitleaks];
-export const UPCOMING_SCANNERS = [osv, trivy];
 
 function git(root, args) {
   const r = spawnSync('git', ['-C', root, ...args], { encoding: 'utf8' });

@@ -12,14 +12,13 @@
     "bin/",
     "src/",
     "rules/",
-    "skills/",
     "tools.lock.json"
   ],
   "engines": {
     "node": ">=18"
   },
   "scripts": {
-    "test": "node --test test/",
+    "test": "node --test",
     "update-lock": "node scripts/update-lock.mjs"
   }
 }

@@ -25,7 +25,6 @@ npx ai-secure-audit             runs pinned versions of the scanners with pinned
         |
         v
 your AI assistant               explains each finding and how to fix it, and lists what the tools cannot check;
-                                skills (npx ai-secure-audit init) add a guided full audit
 ```
 
 - The AI never adds or removes findings; its explanations are kept in a separate section of the report.
@@ -65,7 +64,6 @@ test/         unit tests (npm test)
 profiles/     pinned tool and rule sets per stack (planned)
 rules/        this kit's own opengrep rules (planned)
 config/       example files to copy into the audited project
-skills/       AI skills, one folder per audit phase: see skills/README.md
 docs/         design notes
 ```
 

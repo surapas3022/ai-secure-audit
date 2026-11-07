@@ -41,9 +41,9 @@ Options: `--json` (print machine-readable output only), `--fail-on <critical|hig
 - Pinned in `tools.lock.json`: version, download URL and SHA-256 for each platform.
 - Downloaded on first use to the user cache (`~/.cache/ai-secure-audit/` or `%LOCALAPPDATA%\ai-secure-audit\`).
 - A checksum mismatch stops the run. The CLI never falls back to a version that is not pinned.
-- Basic tier: gitleaks, osv-scanner (offline databases), trivy `config`. opengrep joins once `rules/` has rules.
+- Basic tier today: gitleaks. Other tools are added one at a time, each after passing its own tests
+  (see Planned coverage in the README).
 - Maintainers update versions in `scripts/update-lock.mjs` and run `npm run update-lock`.
-  See [skills/secure-audit/references/tools.md](../skills/secure-audit/references/tools.md).
 
 ## Output
 
@@ -76,7 +76,6 @@ For the AI assistant reading this:
 - Ask before changing code. Fix one finding at a time; run `npx ai-secure-audit retest` after.
 - A leaked secret must be rotated at the provider. Deleting it from the code is not enough.
 - Not checked: whether one user can reach another user's data, and business rules. Say so.
-- For deeper review, see the skills: npx ai-secure-audit init
 ```
 
 The block is how the kit's rules reach assistants that have no skills installed.

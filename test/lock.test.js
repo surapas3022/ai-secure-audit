@@ -6,7 +6,7 @@ const lock = JSON.parse(readFileSync(new URL('../tools.lock.json', import.meta.u
 const PLATFORMS = ['darwin-arm64', 'darwin-x64', 'linux-arm64', 'linux-x64', 'win32-arm64', 'win32-x64'];
 
 test('every basic tool is pinned for every platform with a sha256 and a GitHub release URL', () => {
-  for (const id of ['gitleaks', 'osv-scanner', 'trivy']) {
+  for (const id of Object.keys(lock.tools)) {
     const t = lock.tools[id];
     assert.ok(t, id);
     assert.match(t.version, /^\d+\.\d+\.\d+$/);
