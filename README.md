@@ -1,7 +1,6 @@
 # ai-secure-audit
 
-> Status: early development. The basic check runs from a clone; it is not on npm yet. Planned first release: v0.1,
-> December 2026.
+> Status: 0.0.1 is on npm so `npx ai-secure-audit` runs the basic secret check. v0.1 is not released yet.
 
 A free, open-source security check for apps built with AI. If you make apps with Claude Code, Codex, Cursor or
 Antigravity but security is not your field, ask your AI assistant to run it on your project:

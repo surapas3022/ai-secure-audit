@@ -1,9 +1,16 @@
 {
   "name": "ai-secure-audit",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.0.1",
   "description": "Free, open-source security check for apps built with AI. Runs pinned open-source scanners; no AI needed to run.",
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/surapas3022/ai-secure-audit.git"
+  },
+  "homepage": "https://github.com/surapas3022/ai-secure-audit",
+  "bugs": {
+    "url": "https://github.com/surapas3022/ai-secure-audit/issues"
+  },
   "type": "module",
   "bin": {
     "ai-secure-audit": "bin/ai-secure-audit.js"
