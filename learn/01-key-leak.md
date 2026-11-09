@@ -11,6 +11,8 @@
 - **หมุน key (rotate)**: ยกเลิก key เดิมที่หน้าเว็บของผู้ให้บริการ แล้วออก key ใหม่ key เดิมจะใช้ไม่ได้อีก
 - **git**: ระบบเก็บประวัติการแก้โค้ดทุกครั้ง
 - **commit**: การบันทึกโค้ดหนึ่งครั้งลง git
+- **push**: การส่ง commit จากเครื่องขึ้นไปเก็บบน GitHub
+- **pre-commit hook**: คำสั่งที่ git รันเองก่อน commit ทุกครั้ง ถ้าคำสั่งนั้นไม่ผ่าน จะ commit ไม่ได้
 - **git history**: commit ทั้งหมดที่ผ่านมา ของที่ลบจากไฟล์ล่าสุดแล้วยังดูย้อนหลังได้จากตรงนี้
 - **`.gitignore`**: ไฟล์รายชื่อของที่ไม่ให้ git เก็บ
 - **`.env`**: ไฟล์เก็บค่าตั้งของแอปบนเครื่อง มักใช้เก็บ key และไม่ควรเข้า git
@@ -95,6 +97,59 @@ npx ai-secure-audit
 
 ถ้า key เคยเข้า git แล้ว `retest` จะยังขึ้น `still open` แม้หมุน key แล้ว เพราะ key เก่ายังอยู่ในประวัติ และเครื่องมือไม่มีทางรู้ว่ามันถูกยกเลิกแล้ว [คู่มือของ GitHub][github] บอกว่าการหมุน key อาจเพียงพอ และการเขียนประวัติใหม่อาจไม่คุ้ม ถ้าหมุนแล้วก็ถือว่าข้อนี้จบได้ ให้จดไว้เองว่าหมุนเมื่อไร
 
+## ดักก่อน push
+
+หัวข้อก่อนหน้าคือวิธีแก้หลัง key หลุด หัวข้อนี้คือวิธีกันไม่ให้หลุดอีก ตั้งไว้สองชั้น ชั้นแรกอยู่บนเครื่องของคุณ ชั้นที่สองอยู่บน GitHub
+
+### ชั้นที่ 1: pre-commit hook บนเครื่อง
+
+ให้ [gitleaks][gitleaks] ตรวจทุกครั้งก่อน commit ถ้าเจอ key จะ commit ไม่ได้ key จึงไม่เข้า git history ตั้งแต่แรก
+
+1. ติดตั้ง [pre-commit][precommit] ครั้งเดียวต่อเครื่อง (ต้องมี Python) ถ้าใช้ Mac ที่มี Homebrew ใช้ `brew install pre-commit` แทนได้
+
+   ```bash
+   pipx install pre-commit
+   ```
+
+2. สร้างไฟล์ `.pre-commit-config.yaml` ที่โฟลเดอร์บนสุดของโปรเจกต์ (`v8.30.1` คือรุ่นเดียวกับที่ `npx ai-secure-audit` ใช้)
+
+   ```yaml
+   repos:
+     - repo: https://github.com/gitleaks/gitleaks
+       rev: v8.30.1
+       hooks:
+         - id: gitleaks
+   ```
+
+3. เปิดใช้ในโปรเจกต์
+
+   ```bash
+   pre-commit install
+   ```
+
+ข้อควรรู้
+
+- hook ทำงานเฉพาะในเครื่องที่รัน `pre-commit install` แล้ว เพื่อนในทีมหรือเครื่องใหม่ต้องรันเองด้วย
+- ข้าม hook ได้ด้วย `SKIP=gitleaks git commit ...` หรือ `git commit --no-verify` ถ้าให้ AI commit แทน ให้บอก AI ว่าห้ามข้าม hook
+- hook ไม่ตรวจของที่ commit ไปก่อนติดตั้ง ของเก่าให้ตรวจด้วย `npx ai-secure-audit`
+
+### ชั้นที่ 2: Push Protection บน GitHub
+
+GitHub ตรวจตอนที่คุณ push ถ้าเจอ key ที่รู้จักรูปแบบ จะไม่รับ push นั้น key จึงไม่ขึ้นไปอยู่บน GitHub ([เอกสารของ GitHub][pushabout])
+
+- **ของบัญชีคุณ**: เปิดอยู่แล้วโดยค่าเริ่มต้น กันการ push key ขึ้น repo สาธารณะ เช็กได้ที่ รูปโปรไฟล์ → Settings → Code security → "Push protection for yourself" ([วิธีเช็ก][pushusers])
+- **ของ repo**: ไปที่ repo → Settings → Advanced Security (หมวด Security and quality) → เปิด Secret Protection แล้วกด Enable ที่ Push protection ([วิธีเปิด][pushrepo]) แบบนี้กันได้ทุกคนที่ push เข้า repo นั้น ไม่ใช่แค่ตัวคุณ repo สาธารณะเปิดได้ฟรี ส่วน repo private ต้องซื้อ GitHub Secret Protection ([เอกสารของ GitHub][ghas])
+
+ถ้าโดนบล็อก ให้เอา key ออกจาก commit นั้นก่อนแล้วค่อย push ใหม่ ([วิธีของ GitHub][pushcli]) ถ้าบอกให้ AI ทำ ให้บอกด้วยว่าห้ามกดข้าม
+
+ข้อควรรู้
+
+- จับได้เฉพาะ key ที่ GitHub รู้จักรูปแบบ ([รายชื่อ][patterns])
+- คนที่มีสิทธิ์เขียน repo กดข้ามการบล็อกได้ โดยเลือกเหตุผล เช่น "It's used in tests"
+- ไม่ช่วย repo ที่อยู่ที่อื่น เช่น GitLab และไม่ลบ key ที่เคยขึ้นไปแล้ว ของที่ขึ้นไปแล้วให้แก้ตามหัวข้อก่อนหน้า
+
+สองชั้นนี้ช่วยกันคนละจุด hook จับก่อน key เข้า git history ส่วน Push Protection จับตอน push แม้ในเครื่องนั้นไม่ได้ติดตั้ง hook ไว้
+
 ## key บางตัวเปิดเผยได้ตามที่ผู้ให้บริการออกแบบ
 
 ถ้าเครื่องมือหรือ AI เตือน key พวกนี้ ให้เช็กชนิดของ key ก่อน
@@ -128,6 +183,13 @@ npx ai-secure-audit
 - [Supabase: API keys][supabase]
 - [Firebase: Learn about using and managing API keys][firebase]
 - [gitleaks][gitleaks]
+- [pre-commit][precommit]
+- [GitHub Docs: About push protection][pushabout]
+- [GitHub Docs: Push protection for users][pushusers]
+- [GitHub Docs: Enabling push protection for your repository][pushrepo]
+- [GitHub Docs: Working with push protection from the command line][pushcli]
+- [GitHub Docs: Supported secret scanning patterns][patterns]
+- [GitHub Docs: About GitHub Advanced Security][ghas]
 
 [cwe]: https://cwe.mitre.org/data/definitions/798.html
 [github]: https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/removing-sensitive-data-from-a-repository
@@ -138,3 +200,10 @@ npx ai-secure-audit
 [supabase]: https://supabase.com/docs/guides/api/api-keys
 [firebase]: https://firebase.google.com/docs/projects/api-keys
 [gitleaks]: https://github.com/gitleaks/gitleaks
+[precommit]: https://pre-commit.com/
+[pushabout]: https://docs.github.com/en/code-security/secret-scanning/introduction/about-push-protection
+[pushusers]: https://docs.github.com/en/code-security/secret-scanning/working-with-secret-scanning-and-push-protection/push-protection-for-users
+[pushrepo]: https://docs.github.com/en/code-security/secret-scanning/enabling-secret-scanning-features/enabling-push-protection-for-your-repository
+[pushcli]: https://docs.github.com/en/code-security/secret-scanning/working-with-secret-scanning-and-push-protection/working-with-push-protection-from-the-command-line
+[patterns]: https://docs.github.com/en/code-security/reference/secret-security/supported-secret-scanning-patterns
+[ghas]: https://docs.github.com/en/get-started/learning-about-github/about-github-advanced-security

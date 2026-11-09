@@ -11,6 +11,8 @@
 - **Rotate a key**: cancel the old key on the provider's website and create a new one, so the old one stops working
 - **git**: the system that records every change to your code
 - **Commit**: one saved change in git
+- **Push**: sending your commits from your machine up to GitHub
+- **Pre-commit hook**: a command git runs by itself before every commit. If it fails, the commit does not happen
 - **Git history**: all past commits. Something deleted from the latest files can still be read here
 - **`.gitignore`**: the list of things git should not keep
 - **`.env`**: a file of app settings on your machine. It often holds keys and should not go into git
@@ -95,6 +97,59 @@ A `(build output)` item at medium level says it may be a false alarm, because mi
 
 If the key was ever in git, `retest` still shows `still open` after you rotate it, because the old key is still in the history and the tool cannot know it was cancelled. [GitHub's guide][github] says rotating may be enough and rewriting history may not be warranted. Once rotated, you can treat this item as done. Keep your own note of when you rotated it.
 
+## Block keys before they are pushed
+
+The section above fixes a key after it leaks. This one stops it from leaking again. Set up two layers: one on your machine and one on GitHub.
+
+### Layer 1: a pre-commit hook on your machine
+
+Let [gitleaks][gitleaks] check every commit before it is made. If it finds a key, the commit does not happen, so the key never enters the git history.
+
+1. Install [pre-commit][precommit] once per machine (it needs Python). On a Mac with Homebrew you can use `brew install pre-commit` instead.
+
+   ```bash
+   pipx install pre-commit
+   ```
+
+2. Create `.pre-commit-config.yaml` in the top folder of your project (`v8.30.1` is the same version `npx ai-secure-audit` uses).
+
+   ```yaml
+   repos:
+     - repo: https://github.com/gitleaks/gitleaks
+       rev: v8.30.1
+       hooks:
+         - id: gitleaks
+   ```
+
+3. Turn it on for the project.
+
+   ```bash
+   pre-commit install
+   ```
+
+Good to know
+
+- The hook only runs on machines where `pre-commit install` was run. Teammates and new machines must run it too.
+- It can be skipped with `SKIP=gitleaks git commit ...` or `git commit --no-verify`. If an AI makes commits for you, tell it never to skip the hook.
+- It does not check commits made before you installed it. Check those with `npx ai-secure-audit`.
+
+### Layer 2: Push Protection on GitHub
+
+GitHub checks your push. If it finds a key in a format it knows, it refuses the push, so the key never reaches GitHub ([GitHub's docs][pushabout]).
+
+- **For your account**: on by default, and it stops you pushing keys to public repositories. Check it at your profile picture → Settings → Code security → "Push protection for yourself" ([how to check][pushusers]).
+- **For a repository**: go to the repository → Settings → Advanced Security (under Security and quality) → enable Secret Protection, then click Enable next to Push protection ([how to enable][pushrepo]). This protects every push to that repository, not only yours. It is free for public repositories. Private repositories need GitHub Secret Protection, which is paid ([GitHub's docs][ghas]).
+
+If a push is blocked, remove the key from that commit, then push again ([GitHub's steps][pushcli]). If an AI does this for you, tell it not to bypass the block.
+
+Good to know
+
+- It only catches keys in formats GitHub knows ([the list][patterns]).
+- Anyone with write access can bypass the block by choosing a reason such as "It's used in tests".
+- It does not help repositories hosted elsewhere, such as GitLab, and it does not remove keys that were already pushed. For those, follow the section above.
+
+The two layers cover different moments. The hook catches a key before it enters the git history. Push Protection catches it at push time, even on a machine without the hook.
+
 ## Some keys are meant to be public
 
 If the tool or an AI warns about one of these, check the key type first.
@@ -128,6 +183,13 @@ Accessed 9 November 2026
 - [Supabase: API keys][supabase]
 - [Firebase: Learn about using and managing API keys][firebase]
 - [gitleaks][gitleaks]
+- [pre-commit][precommit]
+- [GitHub Docs: About push protection][pushabout]
+- [GitHub Docs: Push protection for users][pushusers]
+- [GitHub Docs: Enabling push protection for your repository][pushrepo]
+- [GitHub Docs: Working with push protection from the command line][pushcli]
+- [GitHub Docs: Supported secret scanning patterns][patterns]
+- [GitHub Docs: About GitHub Advanced Security][ghas]
 
 [cwe]: https://cwe.mitre.org/data/definitions/798.html
 [github]: https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/removing-sensitive-data-from-a-repository
@@ -138,3 +200,10 @@ Accessed 9 November 2026
 [supabase]: https://supabase.com/docs/guides/api/api-keys
 [firebase]: https://firebase.google.com/docs/projects/api-keys
 [gitleaks]: https://github.com/gitleaks/gitleaks
+[precommit]: https://pre-commit.com/
+[pushabout]: https://docs.github.com/en/code-security/secret-scanning/introduction/about-push-protection
+[pushusers]: https://docs.github.com/en/code-security/secret-scanning/working-with-secret-scanning-and-push-protection/push-protection-for-users
+[pushrepo]: https://docs.github.com/en/code-security/secret-scanning/enabling-secret-scanning-features/enabling-push-protection-for-your-repository
+[pushcli]: https://docs.github.com/en/code-security/secret-scanning/working-with-secret-scanning-and-push-protection/working-with-push-protection-from-the-command-line
+[patterns]: https://docs.github.com/en/code-security/reference/secret-security/supported-secret-scanning-patterns
+[ghas]: https://docs.github.com/en/get-started/learning-about-github/about-github-advanced-security
