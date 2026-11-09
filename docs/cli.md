@@ -43,6 +43,9 @@ Options: `--json` (print machine-readable output only), `--fail-on <critical|hig
 - A checksum mismatch stops the run. The CLI never falls back to a version that is not pinned.
 - Basic tier today: gitleaks. Other tools are added one at a time, each after passing its own tests
   (see Planned coverage in the README).
+- In a git repository gitleaks runs twice, over the commits and over the current files, so a key that is not committed
+  yet is still found. Files git ignores are left out, except build output (`dist/`, `build/`, `.next/static/`,
+  `.output/public/`, `.svelte-kit/output/client/`), because that is what gets deployed. Files over 20 MB are skipped.
 - Maintainers update versions in `scripts/update-lock.mjs` and run `npm run update-lock`.
 
 ## Output
@@ -54,7 +57,7 @@ never committed by accident.
 |---|---|
 | `findings.json` | machines and AI; stable sort, so the same commit gives the same bytes |
 | `report.md` | the simple report: top problems in plain language |
-| `raw/<tool>.json` | each tool's original output |
+| `raw/<tool>.json` | each tool's original output (gitleaks: `raw/gitleaks-history.json` and `raw/gitleaks-files.json`) |
 
 Secrets are redacted in every file: gitleaks runs with `--redact`, and the matched text, author and email are never
 copied into `findings.json` or `report.md`.

@@ -1,6 +1,8 @@
 # ai-secure-audit
 
-> Status: 0.0.1 is on npm so `npx ai-secure-audit` runs the basic secret check. v0.1 is not released yet.
+> Status: 0.0.x on npm runs the basic secret check with `npx ai-secure-audit`. v0.1 is not released yet.
+>
+> **เริ่มตรงนี้:** [คู่มือภาษาไทยสำหรับมือใหม่](docs/start-here.md) ควรตรวจอะไรก่อน เพราะอะไร และแก้ยังไง
 
 A free, open-source security check for apps built with AI. If you make apps with Claude Code, Codex, Cursor or
 Antigravity but security is not your field, ask your AI assistant to run it on your project:
@@ -79,7 +81,7 @@ SHA-256 checksums. The check reads only your project folder and never uploads yo
 
 | Checks | Tool | License |
 |---|---|---|
-| Passwords, API keys and tokens in the code or git history (v0.1) | gitleaks | MIT |
+| Passwords, API keys and tokens in the code, in files not committed yet, in git history and in build output (v0.1) | gitleaks | MIT |
 | Libraries with known vulnerabilities (v0.2) | osv-scanner (offline database) | Apache-2.0 |
 | Dockerfile and config mistakes (v0.3) | trivy config | Apache-2.0 |
 | Code mistakes AI-generated apps often make (see below), planned | opengrep + this kit's own rules | LGPL-2.1 (rules: Apache-2.0) |

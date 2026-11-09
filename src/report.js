@@ -27,8 +27,16 @@ function whereSentence(f) {
       return `\`${e.location}\`. This file is no longer in your project, but it is still in git history${commits}, ` +
         'so anyone with a copy of the repository can still read it';
     }
+    if (e.not_committed) return `\`${e.location}\`. This is not in git yet, so you can still keep it out of your history`;
+    if (e.built) return `\`${e.location}\`${commits}. This file is build output, the code that gets deployed`;
     return `\`${e.location}\`${commits}`;
   }).join('; ');
+}
+
+function whereNote(f) {
+  if (f.evidence.some((e) => e.history_only)) return ' (git history only)';
+  if (f.evidence.some((e) => e.not_committed)) return ' (not committed yet)';
+  return f.evidence.some((e) => e.built) ? ' (build output)' : '';
 }
 
 export function reportMarkdown(result, date) {
@@ -75,8 +83,7 @@ export function reportMarkdown(result, date) {
     lines.push('| ID | Severity | Type | Problem | Where |');
     lines.push('|---|---|---|---|---|');
     for (const f of findings) {
-      const note = f.evidence.some((e) => e.history_only) ? ' (git history only)' : '';
-      lines.push(`| ${f.id} | ${f.severity.normalized} | ${f.category} | ${f.title.replace(/\|/g, '\\|')} | ${where(f)}${note} |`);
+      lines.push(`| ${f.id} | ${f.severity.normalized} | ${f.category} | ${f.title.replace(/\|/g, '\\|')} | ${where(f)}${whereNote(f)} |`);
     }
     lines.push('');
   }

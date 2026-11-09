@@ -36,6 +36,8 @@ export async function scan(target, { log = () => {}, version }) {
     isGit,
     commit: isGit ? git(root, ['rev-parse', '--short', 'HEAD']) : null,
     dirty: isGit ? git(root, ['status', '--porcelain']) !== '' : null,
+    prefix: isGit ? git(root, ['rev-parse', '--show-prefix']) ?? '' : '',
+    isIgnored: (file) => isGit && spawnSync('git', ['-C', root, 'check-ignore', '-q', '--', file]).status === 0,
   };
 
   const tools = lockedTools();
@@ -47,19 +49,24 @@ export async function scan(target, { log = () => {}, version }) {
     try {
       const bin = await ensureTool(s.id, log);
       const prep = s.prepare?.(ctx) ?? {};
-      const rawFile = join(rawDir, `${s.id}.json`);
+      const defaultRaw = join(rawDir, `${s.id}.json`);
+      const passes = s.passes ? s.passes(ctx, rawDir, prep) : [{ rawFile: defaultRaw, args: s.args(ctx, defaultRaw, prep) }];
       log(`running ${s.id} ${run.version} ...`);
-      const r = spawnSync(bin, s.args(ctx, rawFile, prep), {
-        cwd: root,
-        env: { ...process.env, ...(s.env?.(ctx) ?? {}) },
-        encoding: 'utf8',
-        maxBuffer: 64 * 1024 * 1024,
-      });
-      if (r.error) throw r.error;
-      if (!s.okExit.includes(r.status)) {
-        throw new Error(`exit code ${r.status}: ${(r.stderr || r.stdout || '').trim().split('\n').slice(-3).join(' ')}`);
+      let json = null;
+      for (const pass of passes) {
+        const r = spawnSync(bin, pass.args, {
+          cwd: root,
+          env: { ...process.env, ...(s.env?.(ctx) ?? {}) },
+          encoding: 'utf8',
+          maxBuffer: 64 * 1024 * 1024,
+        });
+        if (r.error) throw r.error;
+        if (!s.okExit.includes(r.status)) {
+          throw new Error(`exit code ${r.status}: ${(r.stderr || r.stdout || '').trim().split('\n').slice(-3).join(' ')}`);
+        }
+        const data = existsSync(pass.rawFile) ? JSON.parse(readFileSync(pass.rawFile, 'utf8') || 'null') : null;
+        json = pass.name ? [...(json ?? []), ...(data ?? []).map((item) => ({ ...item, pass: pass.name }))] : data;
       }
-      const json = existsSync(rawFile) ? JSON.parse(readFileSync(rawFile, 'utf8') || 'null') : null;
       const found = s.parse(json, ctx).map((f) => ({ ...f, source: { ...f.source, tool_version: run.version } }));
       run.findings = found.length;
       findings = findings.concat(found);
