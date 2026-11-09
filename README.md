@@ -3,6 +3,8 @@
 > Status: 0.0.x on npm runs the basic secret check with `npx ai-secure-audit`. v0.1 is not released yet.
 >
 > **มือใหม่เริ่มตรงนี้:** [learn/](learn/) ควรตรวจอะไรก่อน เพราะอะไร และแก้ยังไง (ภาษาไทย)
+>
+> **New here?** Start with [learn/](learn/README.en.md): what to check first, why, and how to fix it.
 
 A free, open-source security check for apps built with AI. If you make apps with Claude Code, Codex, Cursor or
 Antigravity but security is not your field, ask your AI assistant to run it on your project:
@@ -66,7 +68,7 @@ profiles/     pinned tool and rule sets per stack (planned)
 rules/        this kit's own opengrep rules (planned)
 config/       example files to copy into the audited project
 docs/         design notes
-learn/        beginner lessons in Thai, one file per topic
+learn/        beginner lessons in Thai and English, one topic per file pair
 ```
 
 ## Planned coverage

@@ -12,6 +12,7 @@
 
 ## Rules that never change
 
+- Every lesson in `learn/` has a Thai file (`name.md`) and an English file (`name.en.md`), with a language switch on top.
 - Findings come only from the pinned tools; never invent, drop or re-rate them in code or docs.
 - No runtime npm dependencies.
 - No real scan results, reports or vulnerability details in this repository (they belong in the private repo).

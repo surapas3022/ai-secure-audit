@@ -77,7 +77,8 @@ For the AI assistant reading this:
 - Findings are in .audit/out/findings.json. Do not add, remove or re-rate findings.
 - Explain them to the user in plain language, most serious first.
 - Ask before changing code. Fix one finding at a time; run `npx ai-secure-audit retest` after.
-- A leaked secret must be rotated at the provider. Deleting it from the code is not enough.
+- Use each finding's fix field. A key that is in git or was deployed must be rotated at the provider: deleting it from the code is not enough.
+- A finding marked not_committed can be moved out of the code without rotating, unless the key was shared or pasted somewhere else.
 - Not checked: whether one user can reach another user's data, and business rules. Say so.
 ```
 
