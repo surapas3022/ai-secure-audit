@@ -66,6 +66,39 @@ npx ai-secure-audit
 
 เครื่องมือรันบนเครื่องของคุณและไม่ส่งโค้ดออกไป แต่ถ้าให้ AI อ่านผล ข้อมูลที่ AI อ่านจะถูกส่งไปหาผู้ให้บริการ AI นั้น ผลอยู่ที่ `.audit/out/report.md` และโฟลเดอร์นี้ไม่เข้า git
 
+### เช็กเฉพาะไฟล์ .env ด้วย git (ไม่ต้องติดตั้งอะไรเพิ่ม)
+
+ถ้าอยากรู้เร็ว ๆ ว่าไฟล์ `.env` เคยเข้า git ไหม ให้รันในโฟลเดอร์โปรเจกต์
+
+```bash
+git log --all --full-history --oneline -- .env
+```
+
+- `--all` ดูทุก branch ไม่ใช่แค่ branch ที่เปิดอยู่
+- `--full-history` ไม่ให้ git ย่อประวัติทิ้ง ปกติเวลาดูประวัติทีละไฟล์ [git จะตัดบาง commit ออก][gitlog] (หัวข้อ History Simplification) เช่น commit ใน branch ที่ merge มาแล้ว
+- `-- .env` ดูเฉพาะไฟล์ชื่อนี้
+
+ไม่มีอะไรขึ้นเลย แปลว่าไฟล์ `.env` ที่โฟลเดอร์บนสุดไม่เคยเข้า git ถ้ามีบรรทัดขึ้นมา แปลว่าเคยเข้าแล้ว ถึงไฟล์จะลบไปแล้วก็ตาม ให้แก้ตามหัวข้อ "แก้ตามลำดับนี้" ข้างล่าง เริ่มจากเปลี่ยน key ก่อน
+
+ลองกับแอปตัวอย่างข้างบน (`cd /tmp/demo-app` ก่อน) จะได้สอง commit เลข commit ต่างกันทุกครั้งที่สร้างแอป
+
+```text
+14e74b2 Remove .env
+e9c271f Add payments
+```
+
+commit ล่างคือตอนที่ `.env` เข้า git ส่วน commit บนคือตอนที่ลบ ไฟล์หายไปแล้ว แต่ key ยังอยู่ใน commit ล่าง
+
+คำสั่งนี้เห็นแค่ไฟล์ชื่อ `.env` ที่โฟลเดอร์บนสุด ถ้ามี `.env` ในโฟลเดอร์ย่อย หรือชื่ออื่นอย่าง `.env.local` `.env.production` ให้ใช้แบบนี้ ([รูปแบบ `:(glob)`][pathspec] ทำให้ `**` แปลว่าทุกโฟลเดอร์)
+
+```bash
+git log --all --full-history --oneline -- ':(glob)**/.env*'
+```
+
+แบบนี้จะเห็น `.env.example` ด้วย ซึ่งปกติเป็นไฟล์ตัวอย่างที่ไม่มีค่าจริง
+
+ข้อจำกัด: ทั้งสองคำสั่งดูจากชื่อไฟล์เท่านั้น key ที่เขียนไว้ในไฟล์อื่น เช่น `src/web/config.js` ในแอปตัวอย่าง จะไม่เห็น และอย่าใช้ `git log -p` ดูเนื้อไฟล์แล้วคัดลอกไปวางในแชตหรือถาม AI เพราะเท่ากับส่ง key ออกไปอีกทาง ให้ใช้ `npx ai-secure-audit` ซึ่งตรวจทุกไฟล์และไม่พิมพ์ค่า key ออกมา
+
 ## อ่านผลยังไง
 
 | ที่เห็นในรายงาน | ความหมาย | ต้องหมุน key ไหม |
@@ -190,6 +223,8 @@ GitHub ตรวจตอนที่คุณ push ถ้าเจอ key ท�
 - [GitHub Docs: Working with push protection from the command line][pushcli]
 - [GitHub Docs: Supported secret scanning patterns][patterns]
 - [GitHub Docs: About GitHub Advanced Security][ghas]
+- [Git: git-log][gitlog] หัวข้อ History Simplification
+- [Git: gitglossary — pathspec][pathspec]
 
 [cwe]: https://cwe.mitre.org/data/definitions/798.html
 [github]: https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/removing-sensitive-data-from-a-repository
@@ -207,3 +242,5 @@ GitHub ตรวจตอนที่คุณ push ถ้าเจอ key ท�
 [pushcli]: https://docs.github.com/en/code-security/secret-scanning/working-with-secret-scanning-and-push-protection/working-with-push-protection-from-the-command-line
 [patterns]: https://docs.github.com/en/code-security/reference/secret-security/supported-secret-scanning-patterns
 [ghas]: https://docs.github.com/en/get-started/learning-about-github/about-github-advanced-security
+[gitlog]: https://git-scm.com/docs/git-log#_history_simplification
+[pathspec]: https://git-scm.com/docs/gitglossary#Documentation/gitglossary.txt-aiddefpathspecapathspec

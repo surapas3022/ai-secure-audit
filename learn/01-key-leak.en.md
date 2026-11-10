@@ -66,6 +66,46 @@ Or tell your AI assistant:
 
 The tool runs on your machine and does not upload your code. If an AI reads the results, what it reads goes to that AI provider. Results are in `.audit/out/report.md`, and that folder stays out of git.
 
+### Check only the .env file with git (nothing to install)
+
+For a quick answer to "was `.env` ever committed?", run this in the project folder:
+
+```bash
+git log --all --full-history --oneline -- .env
+```
+
+- `--all` looks at every branch, not just the one you are on.
+- `--full-history` stops git from simplifying the history. When you look at one file, [git normally drops some
+  commits][gitlog] (see History Simplification), such as commits on branches that were merged.
+- `-- .env` limits the output to that file.
+
+No output means the `.env` at the top of the project was never committed. Any line means it was, even if the file has
+since been deleted. Follow "Fix in this order" below, starting with rotating the key.
+
+On the demo app above (`cd /tmp/demo-app` first) you get two commits. The commit ids differ every time the app is
+created.
+
+```text
+14e74b2 Remove .env
+e9c271f Add payments
+```
+
+The lower commit is when `.env` was committed, the upper one when it was deleted. The file is gone, but the key is
+still in the lower commit.
+
+This command only sees a file named `.env` at the top of the project. If you have `.env` in subfolders, or names like
+`.env.local` or `.env.production`, use this instead (the [`:(glob)` form][pathspec] makes `**` mean any folder):
+
+```bash
+git log --all --full-history --oneline -- ':(glob)**/.env*'
+```
+
+This also lists `.env.example`, which is normally a template with no real values.
+
+Limits: both commands go by file name only. A key written in another file, such as `src/web/config.js` in the demo
+app, is not found. Do not use `git log -p` to view the contents and paste them into a chat or an AI: that sends the
+key out another way. Use `npx ai-secure-audit`, which checks every file and never prints key values.
+
 ## Reading the results
 
 | What the report shows | Meaning | Do you need to rotate the key? |
@@ -190,6 +230,8 @@ Accessed 9 November 2026
 - [GitHub Docs: Working with push protection from the command line][pushcli]
 - [GitHub Docs: Supported secret scanning patterns][patterns]
 - [GitHub Docs: About GitHub Advanced Security][ghas]
+- [Git: git-log][gitlog], History Simplification
+- [Git: gitglossary — pathspec][pathspec]
 
 [cwe]: https://cwe.mitre.org/data/definitions/798.html
 [github]: https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/removing-sensitive-data-from-a-repository
@@ -207,3 +249,5 @@ Accessed 9 November 2026
 [pushcli]: https://docs.github.com/en/code-security/secret-scanning/working-with-secret-scanning-and-push-protection/working-with-push-protection-from-the-command-line
 [patterns]: https://docs.github.com/en/code-security/reference/secret-security/supported-secret-scanning-patterns
 [ghas]: https://docs.github.com/en/get-started/learning-about-github/about-github-advanced-security
+[gitlog]: https://git-scm.com/docs/git-log#_history_simplification
+[pathspec]: https://git-scm.com/docs/gitglossary#Documentation/gitglossary.txt-aiddefpathspecapathspec
