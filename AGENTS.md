@@ -16,7 +16,7 @@ Use this section when someone points you at this repository and asks you to chec
 - Use each finding's `fix` field. A key that is in git or was deployed must be rotated at the provider first: deleting it from the code is not enough. A finding marked `not_committed` can be moved out of the code without rotating, unless the key was shared or pasted somewhere else.
 - `retest` keeps a key from git history as `still open` even after it is rotated, because the tool cannot know it was cancelled. Tell the user this.
 - Ask before rewriting git history.
-- Say what was not checked: whether one user can reach another user's data, business rules, database rules, the live server, vulnerable libraries and Docker or config files. "0 problems" does not mean the app is safe.
+- Say what was not checked: whether one user can reach another user's data, business rules, database rules, the live server, and Docker or config files. "0 problems" does not mean the app is safe.
 - Exit code 2 means a tool did not run. Tell the user the check is incomplete.
 - Only check code the user owns or has permission to test. If you are sending code to an AI provider and the code belongs to someone else, ask first.
 

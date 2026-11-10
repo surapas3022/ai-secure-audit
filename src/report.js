@@ -94,7 +94,7 @@ export function reportMarkdown(result, date) {
   lines.push('- Business rules: prices, coupons, approvals, payments');
   lines.push('- Database rules such as Supabase row-level security or Firebase security rules (planned)');
   lines.push('- Anything about the live server or website');
-  lines.push('- Libraries with known vulnerabilities, and Docker/config mistakes: not in this version yet (coming in v0.2 and v0.3)');
+  lines.push('- Docker/config mistakes: not in this version yet (coming in v0.3)');
   lines.push('');
   lines.push('## Tools');
   lines.push('');
@@ -120,7 +120,7 @@ export function consoleSummary(result, outRel) {
     '- Use each finding\'s fix field. A key that is in git or was deployed must be rotated at the provider: deleting it from the code is not enough.',
     '- A finding marked not_committed can be moved out of the code without rotating, unless the key was shared or pasted somewhere else.',
     '- Not checked: whether one user can reach another user\'s data, business rules, and (in this version)',
-    '  vulnerable libraries and Docker/config files. Say so.',
+    '  Docker/config files. Say so.',
     ...(failed.length ? ['- Some tools did not run (see NOT RUN above). Tell the user the check is incomplete.'] : []),
   ].join('\n');
 }

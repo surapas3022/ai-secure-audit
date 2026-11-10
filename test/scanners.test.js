@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import gitleaks from '../src/scanners/gitleaks.js';
+import osv from '../src/scanners/osv.js';
 import { sortAndNumber } from '../src/findings.js';
 
 const fixture = (name) => JSON.parse(readFileSync(new URL(`./fixtures/${name}.json`, import.meta.url), 'utf8'));
@@ -18,6 +19,24 @@ test('gitleaks: one finding per secret location, no secret or personal data copi
 
 test('gitleaks: null report (no leaks) gives no findings', () => {
   assert.deepEqual(gitleaks.parse(null, ctx), []);
+});
+
+test('osv-scanner: one finding per advisory group, relative path, fix version', () => {
+  const f = osv.parse(fixture('osv-scanner'), ctx);
+  assert.equal(f.length, 6);
+  assert.ok(f.every((x) => x.evidence[0].location === 'package-lock.json'));
+  assert.ok(f.every((x) => x.fix.includes('4.17.21') || x.fix.startsWith('Upgrade')));
+  assert.ok(f.every((x) => ['critical', 'high', 'medium', 'low'].includes(x.severity.normalized)));
+});
+
+test('osv-scanner: no report (no lockfiles) gives no findings', () => {
+  assert.deepEqual(osv.parse(null, ctx), []);
+});
+
+test('secrets sort before dependencies', () => {
+  const all = [...osv.parse(fixture('osv-scanner'), ctx), ...gitleaks.parse(fixture('gitleaks'), ctx)];
+  assert.equal(sortAndNumber(all)[0].category, 'secret');
+  assert.equal(JSON.stringify(sortAndNumber(all)), JSON.stringify(sortAndNumber([...all].reverse())));
 });
 
 test('ordering does not depend on input order', () => {

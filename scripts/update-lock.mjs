@@ -17,6 +17,18 @@ const TOOLS = {
       return { name: `gitleaks_${v}_${o}_${arch}.${os === 'win32' ? 'zip' : 'tar.gz'}`, binary: os === 'win32' ? 'gitleaks.exe' : 'gitleaks' };
     },
   },
+  'osv-scanner': {
+    repo: 'google/osv-scanner',
+    version: '2.7.0',
+    license: 'Apache-2.0',
+    checksums: () => 'osv-scanner_SHA256SUMS',
+    asset(v, os, arch) {
+      const a = { x64: 'amd64', arm64: 'arm64' }[arch];
+      const o = { darwin: 'darwin', linux: 'linux', win32: 'windows' }[os];
+      const name = `osv-scanner_${o}_${a}${os === 'win32' ? '.exe' : ''}`;
+      return { name, binary: name };
+    },
+  },
 };
 
 function archiveKind(name) {

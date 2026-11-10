@@ -1,6 +1,6 @@
 # CLI design: `npx ai-secure-audit`
 
-Status: `scan`, `retest` and `tools` work from a clone (`node bin/ai-secure-audit.js`) and from npm 0.0.1. v0.1 is not released yet.
+Status: `scan`, `retest` and `tools` work from a clone (`node bin/ai-secure-audit.js`) and from npm 0.0.1. Version 0.0.3 adds osv-scanner. v0.1 is not released yet.
 `init`, `mcp` and `--advanced` are not implemented.
 
 ## Who runs it
@@ -41,8 +41,12 @@ Options: `--json` (print machine-readable output only), `--fail-on <critical|hig
 - Pinned in `tools.lock.json`: version, download URL and SHA-256 for each platform.
 - Downloaded on first use to the user cache (`~/.cache/ai-secure-audit/` or `%LOCALAPPDATA%\ai-secure-audit\`).
 - A checksum mismatch stops the run. The CLI never falls back to a version that is not pinned.
-- Basic tier today: gitleaks. Other tools are added one at a time, each after passing its own tests
+- Basic tier today: gitleaks and osv-scanner. Other tools are added one at a time, each after passing its own tests
   (see Planned coverage in the README).
+- osv-scanner reads lockfiles (`package-lock.json`, `pnpm-lock.yaml`, `yarn.lock`, `pubspec.lock`, `requirements.txt`
+  and others) and checks them against an offline copy of the public OSV database. The first run downloads the
+  database for each ecosystem it finds (npm was about 210 MB in November 2026) to the user cache; the list of libraries never
+  leaves the machine. `node_modules/` and files git ignores are skipped. A folder with no lockfile gives no findings.
 - In a git repository gitleaks runs twice, over the commits and over the current files, so a key that is not committed
   yet is still found. Files git ignores are left out, except build output (`dist/`, `build/`, `.next/static/`,
   `.output/public/`, `.svelte-kit/output/client/`), because that is what gets deployed. Files over 20 MB are skipped.
@@ -57,7 +61,7 @@ never committed by accident.
 |---|---|
 | `findings.json` | machines and AI; stable sort, so the same commit gives the same bytes |
 | `report.md` | the simple report: top problems in plain language |
-| `raw/<tool>.json` | each tool's original output (gitleaks: `raw/gitleaks-history.json` and `raw/gitleaks-files.json`) |
+| `raw/<tool>.json` | each tool's original output (gitleaks: `raw/gitleaks-history.json` and `raw/gitleaks-files.json`; osv-scanner: `raw/osv-scanner.json`) |
 
 Secrets are redacted in every file: gitleaks runs with `--redact`, and the matched text, author and email are never
 copied into `findings.json` or `report.md`.
