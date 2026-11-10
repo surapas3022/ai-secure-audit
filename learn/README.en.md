@@ -2,7 +2,7 @@
 
 [ภาษาไทย](README.md) | **English**
 
-For people who build apps with AI and have never studied security. Read in order and fix one item at a time. Each topic has its own file. Items 1 and 5 are written; the others will be added one file at a time.
+For people who build apps with AI and have never studied security. Read in order and fix one item at a time. Each topic has its own file. Items 1, 2 and 5 are written; the others will be added one file at a time.
 
 Not reading? Ask your AI assistant instead:
 
@@ -11,7 +11,7 @@ Not reading? Ask your AI assistant instead:
 | Order | Topic | Why it is here | How to check today |
 |---|---|---|---|
 | 1 | [Leaked keys](01-key-leak.en.md) | Anyone who finds a key can use it at once, with no skill, and it can cost real money | `npx ai-secure-audit` |
-| 2 | Seeing or changing other people's data | In some apps, changing a number in the URL shows someone else's data | A person checks; tools cannot catch all of it |
+| 2 | [Seeing or changing other people's data](02-other-users-data.en.md) | In some apps, changing a number in the URL shows someone else's data | A person checks; tools cannot catch all of it |
 | 3 | Database rules left open (Supabase, Firebase) | Outsiders can read the database without going through your website | A person checks; the tool does not cover this yet |
 | 4 | API with no login check, or a check only in the frontend | Calling the API directly skips the check | A person checks; the tool does not cover this yet |
 | 5 | [Libraries with known holes](05-vulnerable-libraries.en.md) | The attack is often already published, but most fixes are just an update | `npx ai-secure-audit` (needs a lockfile) |
