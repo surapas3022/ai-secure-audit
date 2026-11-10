@@ -2,7 +2,7 @@
 
 [ภาษาไทย](README.md) | **English**
 
-For people who build apps with AI and have never studied security. Read in order and fix one item at a time. Each topic has its own file. Item 1 is written; the others will be added one file at a time.
+For people who build apps with AI and have never studied security. Read in order and fix one item at a time. Each topic has its own file. Items 1 and 5 are written; the others will be added one file at a time.
 
 Not reading? Ask your AI assistant instead:
 
@@ -14,7 +14,7 @@ Not reading? Ask your AI assistant instead:
 | 2 | Seeing or changing other people's data | In some apps, changing a number in the URL shows someone else's data | A person checks; tools cannot catch all of it |
 | 3 | Database rules left open (Supabase, Firebase) | Outsiders can read the database without going through your website | A person checks; the tool does not cover this yet |
 | 4 | API with no login check, or a check only in the frontend | Calling the API directly skips the check | A person checks; the tool does not cover this yet |
-| 5 | Libraries with known holes | The attack is often already published, but most fixes are just an update | The tool does not cover this yet |
+| 5 | [Libraries with known holes](05-vulnerable-libraries.en.md) | The attack is often already published, but most fixes are just an update | `npx ai-secure-audit` (needs a lockfile) |
 | 6 | Unsafe Docker or server settings | Makes the damage spread further; only matters if you run your own server | The tool does not cover this yet |
 
 This order is this project's judgement for beginners, based on how much damage each problem does and how easy it is to attack. It is not a ranking from a standard. The usual reference is the [OWASP Top 10:2025][owasp], which ranks risks for web apps overall: broken access control (our item 2) is first, security misconfiguration second, and software supply chain failures third.
