@@ -74,6 +74,8 @@ export default {
   parse(json, ctx) {
     const prefix = ctx.prefix ?? '';
     const groups = new Map();
+    // Rule and file pairs the files pass saw, counted before the ignore filter: a key still on disk is not "history only".
+    const inFiles = new Set();
     for (const leak of json ?? []) {
       const fromFiles = leak.pass === 'files';
       let file = rel(ctx.root, leak.File);
@@ -82,6 +84,7 @@ export default {
         if (!file.startsWith(prefix)) continue;
         file = file.slice(prefix.length);
       }
+      if (fromFiles) inFiles.add(`${leak.RuleID}:${file}`);
       const kind = fileKind(file);
       if (kind === 'internal') continue;
       // A file git ignores stays on this machine. Build output is the exception: it gets deployed.
@@ -93,11 +96,16 @@ export default {
       groups.set(key, g);
     }
     const fileExists = ctx.fileExists ?? ((f) => existsSync(join(ctx.root, f)));
+    const filesPassRan = (json ?? []).some((l) => l.pass);
     return [...groups].map(([key, { leak, file, kind, commits, inHistory }]) => {
       const commitList = [...commits].sort();
-      // A secret in a file that no longer exists is only in git history. Say so: people look for the file and
-      // cannot find it, then think the tool is wrong.
-      const historyOnly = ctx.isGit !== false && !fileExists(file);
+      // A secret that is no longer in the current files is only in git history: the file was deleted, or the key was
+      // taken out of a file that is still there. Say so: people look for it, cannot find it, then think the tool is
+      // wrong. The files pass decides when it ran (it always does when there is history); otherwise fall back to
+      // whether the file exists. The same rule anywhere in the same file counts as still there, so a key that only
+      // moved to another line is never called history only.
+      const historyOnly = ctx.isGit !== false && inHistory && !inFiles.has(`${leak.RuleID}:${file}`) &&
+        (filesPassRan || !fileExists(file));
       const built = kind === 'built';
       const notCommitted = Boolean(ctx.isGit) && !inHistory && !built;
       const guess = built && leak.RuleID === 'generic-api-key';

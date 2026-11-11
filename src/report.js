@@ -24,7 +24,7 @@ function whereSentence(f) {
   return f.evidence.map((e) => {
     const commits = e.commits?.length ? ` (commit ${e.commits.join(', ')})` : '';
     if (e.history_only) {
-      return `\`${e.location}\`. This file is no longer in your project, but it is still in git history${commits}, ` +
+      return `\`${e.location}\`. This key is no longer in the files of your project, but it is still in git history${commits}, ` +
         'so anyone with a copy of the repository can still read it';
     }
     if (e.not_committed) return `\`${e.location}\`. This is not in git yet, so you can still keep it out of your history`;

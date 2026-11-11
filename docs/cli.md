@@ -1,6 +1,6 @@
 # CLI design: `npx ai-secure-audit`
 
-Status: `scan`, `retest` and `tools` work from a clone (`node bin/ai-secure-audit.js`) and from npm 0.0.1. Version 0.0.3 adds osv-scanner. v0.1 is not released yet.
+Status: `scan`, `retest` and `tools` work from a clone (`node bin/ai-secure-audit.js`) and from npm 0.0.1. Version 0.0.3 adds osv-scanner. Version 0.0.4 also marks a key taken out of a file that still exists as `(git history only)`, not only a key in a deleted file. v0.1 is not released yet.
 `init`, `mcp` and `--advanced` are not implemented.
 
 ## Who runs it

@@ -84,3 +84,23 @@ test('nothing secret is copied into findings', () => {
   const text = JSON.stringify(gitleaks.parse([leak('config.js', 'files', { Email: 'a@example.invalid', Author: 'Someone' })], ctx));
   for (const banned of ['REDACTED', 'a@example.invalid', 'Someone']) assert.ok(!text.includes(banned), banned);
 });
+
+test('a key taken out of a file that is still there is marked as git history only', () => {
+  const [f] = gitleaks.parse([leak('config.js', 'history', { Commit: 'abcdef1234' })], ctx);
+  assert.equal(evidence(f).history_only, true);
+  assert.deepEqual(evidence(f).commits, ['abcdef1']);
+});
+
+test('a key still in the file is not history only, even on another line or in a git-ignored file', () => {
+  const still = gitleaks.parse([leak('config.js', 'history', { Commit: 'abcdef1234' }), leak('config.js', 'files')], ctx);
+  assert.equal(evidence(still[0]).history_only, undefined);
+  const moved = gitleaks.parse([leak('config.js', 'history', { Commit: 'abcdef1234' }), leak('config.js', 'files', { StartLine: 5 })], ctx);
+  assert.ok(moved.every((f) => evidence(f).history_only === undefined));
+  const ignored = gitleaks.parse([leak('.env', 'history', { Commit: 'abcdef1234' }), leak('.env', 'files')], { ...ctx, isIgnored: () => true });
+  assert.equal(evidence(ignored[0]).history_only, undefined);
+});
+
+test('a key not committed yet is never history only', () => {
+  const [f] = gitleaks.parse([leak('config.js', 'files')], { ...ctx, fileExists: () => false });
+  assert.equal(evidence(f).history_only, undefined);
+});
