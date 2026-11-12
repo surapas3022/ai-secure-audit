@@ -18,7 +18,7 @@ Use this section when someone points you at this repository and asks you to chec
 - `retest` keeps a key from git history as `still open` even after it is rotated, because the tool cannot know it was cancelled. Tell the user this.
 - Ask before rewriting git history.
 - Say what was not checked: whether one user can reach another user's data, business rules, database rules, the live server, and Docker or config files. "0 problems" does not mean the app is safe.
-- `findings.json` has a `coverage.gaps` list: languages with no code rules and lockfiles from ecosystems not tested yet. Tell the user each one; "0 findings" does not cover them.
+- `findings.json` has a `coverage.gaps` list: languages with no code rules and lockfiles from ecosystems not tested yet. Tell the user each one; "0 findings" does not cover them. For a language with no code rules you may offer to review it with [`docs/ai-review-prompt.md`](docs/ai-review-prompt.md); keep what you find in a separate section, not as findings.
 - Exit code 2 means a tool did not run. Tell the user the check is incomplete.
 - Only check code the user owns or has permission to test. If you are sending code to an AI provider and the code belongs to someone else, ask first.
 

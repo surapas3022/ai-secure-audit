@@ -124,7 +124,8 @@ Every tool sends traffic only to hosts listed in `.audit/targets.yml`, and produ
   the report lists these for manual review.
 - Code rules exist for JavaScript and TypeScript only so far. Secrets are found in any language, and libraries in
   npm, PHP, Go, Rust, Ruby, C# and Python lockfiles; the report says which languages and lockfiles it could not
-  check, so "0 findings" is never read as "checked".
+  check, so "0 findings" is never read as "checked". For those, [docs/ai-review-prompt.md](docs/ai-review-prompt.md) is a
+  prompt for your AI assistant that works in any language (its results vary between runs; treat them as leads).
 
 ## Privacy
 

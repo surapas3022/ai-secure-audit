@@ -39,6 +39,7 @@ test('coverage: a PHP project says its code was not checked', () => {
     const gaps = coverageGaps(cov);
     assert.equal(gaps.length, 1);
     assert.match(gaps[0], /php \(2 files\)/);
+    assert.match(gaps[0], /docs\/ai-review-prompt\.md/);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

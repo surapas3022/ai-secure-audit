@@ -99,7 +99,9 @@ export function coverageGaps(cov) {
   const noRules = cov.languages.filter((l) => !l.code_rules);
   if (noRules.length) {
     gaps.push(`Code rules: this kit has no rules yet for ${noRules.map((l) => `${l.language} (${l.files} file${l.files === 1 ? "" : "s"})`).join(', ')}. ` +
-      'Code in these languages was not checked for mistakes; "0 findings" says nothing about it.');
+      'Code in these languages was not checked for mistakes; "0 findings" says nothing about it. To review it, ask an ' +
+      'AI assistant with the prompt in https://github.com/surapas3022/ai-secure-audit/blob/main/docs/ai-review-prompt.md ' +
+      '(its results are leads to check, not findings).');
   }
   const untested = cov.lockfiles.filter((l) => !l.tested);
   if (untested.length) {
