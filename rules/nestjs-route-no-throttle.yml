@@ -1,0 +1,67 @@
+rules:
+  - id: nestjs-route-no-throttle
+    languages: [typescript]
+    severity: WARNING
+    message: >-
+      This NestJS route accepts sign-ins, sign-ups, joins or codes, and no throttle covers it here. A short script can
+      repeat it thousands of times: guess passwords or codes, or create as many accounts as it likes. Add
+      @nestjs/throttler: register ThrottlerGuard for the whole app (APP_GUARD) or put @Throttle on this route with a
+      low limit, and lock out after repeated failures. If a limit is set somewhere this rule cannot see (the reverse
+      proxy), confirm it actually covers this route.
+    metadata:
+      category: code
+      cwe: 'CWE-307: Improper Restriction of Excessive Authentication Attempts'
+      asvs: 'OWASP ASVS 5.0 V6.3.1 (brute force), V2.4.1 (anti-automation)'
+      confidence: MEDIUM
+      # Dropped when the project registers ThrottlerGuard globally (rule nestjs-global-throttler, any file).
+      suppressed-by: nestjs-global-throttler
+      limitations: >-
+        Literal paths only. Does not see a guard of another name that limits requests, or limits at a proxy or CDN.
+    patterns:
+      - pattern-either:
+          - patterns:
+              - pattern: |
+                  @$DEC($PATH)
+                  $M(...) { ... }
+              - metavariable-regex:
+                  metavariable: $PATH
+                  regex: (?i).*(log-?in|sign-?in|sign-?up|register|join|otp|verify|forgot|reset|password|passcode|redeem)
+          # @Controller('auth/login') with @Post() and no path of its own.
+          - patterns:
+              - pattern-inside: |
+                  @Controller($CPATH)
+                  class $C { ... }
+              - pattern: |
+                  @$DEC()
+                  $M(...) { ... }
+              - metavariable-regex:
+                  metavariable: $CPATH
+                  regex: (?i).*(log-?in|sign-?in|sign-?up|register|join|otp|verify|forgot|reset|password|passcode|redeem)
+      - metavariable-regex:
+          metavariable: $DEC
+          regex: ^(Post|Put|Patch|All)$
+      - pattern-not: |
+          @Throttle(...)
+          $M(...) { ... }
+      - pattern-not: |
+          @UseGuards(..., ThrottlerGuard, ...)
+          $M(...) { ... }
+      - pattern-not-inside: |
+          @Throttle(...)
+          class $C2 { ... }
+      - pattern-not-inside: |
+          @UseGuards(..., ThrottlerGuard, ...)
+          class $C2 { ... }
+
+  - id: nestjs-global-throttler
+    languages: [typescript]
+    severity: INFO
+    message: ThrottlerGuard is registered for the whole app.
+    metadata:
+      category: code
+      # Not a problem: only used to drop nestjs-route-no-throttle findings. Never shown to the user.
+      internal: true
+    pattern-either:
+      - pattern: '{ provide: APP_GUARD, useClass: ThrottlerGuard }'
+      - pattern: '{ provide: APP_GUARD, useClass: ThrottlerBehindProxyGuard }'
+      - pattern: $APP.useGlobalGuards(..., new ThrottlerGuard(...), ...)

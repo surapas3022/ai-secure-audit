@@ -1,6 +1,6 @@
 {
   "name": "ai-secure-audit",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "Free, open-source security check for apps built with AI. Runs pinned open-source scanners; no AI needed to run.",
   "license": "Apache-2.0",
   "repository": {

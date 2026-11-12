@@ -30,12 +30,17 @@ export default {
   okExit: [0],
 
   parse(json, ctx) {
+    // opengrep prefixes the rule id with the config path, joined by dots; our rule ids have no dots.
+    const results = (json?.results ?? []).map((r) => ({ ...r, ruleId: r.check_id.split('.').at(-1) }));
+    // Internal rules are never shown: they only record that something exists anywhere in the project (for example a
+    // throttle registered for the whole app), and a rule with suppressed-by: <id> is dropped when that rule matched.
+    const seen = new Set(results.filter((r) => r.extra?.metadata?.internal).map((r) => r.ruleId));
     const findings = [];
-    for (const r of json?.results ?? []) {
-      // opengrep prefixes the rule id with the config path, joined by dots; our rule ids have no dots.
-      const ruleId = r.check_id.split('.').at(-1);
-      const location = `${rel(ctx.root, r.path)}:${r.start.line}`;
+    for (const r of results) {
       const meta = r.extra?.metadata ?? {};
+      if (meta.internal || (meta['suppressed-by'] && seen.has(meta['suppressed-by']))) continue;
+      const ruleId = r.ruleId;
+      const location = `${rel(ctx.root, r.path)}:${r.start.line}`;
       const [title, ...rest] = (r.extra?.message ?? ruleId).split('. ');
       findings.push({
         fingerprint: `opengrep:${ruleId}:${location}`,

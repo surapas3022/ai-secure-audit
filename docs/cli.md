@@ -1,6 +1,6 @@
 # CLI design: `npx ai-secure-audit`
 
-Status: `scan`, `retest` and `tools` work from a clone (`node bin/ai-secure-audit.js`) and from npm 0.0.1. Version 0.0.3 adds osv-scanner. Version 0.0.4 also marks a key taken out of a file that still exists as `(git history only)`, not only a key in a deleted file. Version 0.0.5 adds opengrep with the first rule of this kit. v0.1 is not released yet.
+Status: `scan`, `retest` and `tools` work from a clone (`node bin/ai-secure-audit.js`) and from npm 0.0.1. Version 0.0.3 adds osv-scanner. Version 0.0.4 also marks a key taken out of a file that still exists as `(git history only)`, not only a key in a deleted file. Version 0.0.5 adds opengrep with the first rule of this kit. Version 0.0.6 adds rules for NestJS and for vote routes, and runs on Alpine Linux. v0.1 is not released yet.
 `init`, `mcp` and `--advanced` are not implemented.
 
 ## Who runs it
@@ -18,7 +18,7 @@ The user only has to say something like:
 
 - Node.js 18 or later, and git if the project is a git repository. Nothing else: no Docker, Homebrew, Python or Java
   for the basic check.
-- Windows, macOS and Linux (x64 and arm64).
+- Windows, macOS and Linux (x64 and arm64, glibc or musl/Alpine).
 - **No runtime npm dependencies.** A security tool should not bring a dependency tree of its own. Node's built-in
   modules (`fetch`, `crypto`, `child_process`, `zlib`) are enough.
 
@@ -54,10 +54,19 @@ Options: `--json` (print machine-readable output only), `--fail-on <critical|hig
   it; `opengrep scan --test rules/` runs them). Rules from the Semgrep Registry are not used: their license is not open
   source. Files git ignores are scanned too, except installed and generated code (`node_modules/`, `dist/`, `build/`,
   `.next/`, `.nuxt/`, `.output/`, `.svelte-kit/`, `coverage/`, `vendor/`). opengrep publishes no checksums file, so the
-  lock takes the SHA-256 GitHub records for each release asset. Linux builds need glibc (not Alpine).
+  lock takes the SHA-256 GitHub records for each release asset. On Linux without glibc (Alpine) the CLI uses the lock
+  entries `linux-*-musl`: opengrep's musllinux build, and the same static files as glibc Linux for the other tools.
 - First rule, `express-route-no-rate-limit` (medium): an Express route whose path looks like sign-in, sign-up, join,
   reset or a code check, in a file with no limiter package loaded and no limit named in the route. It cannot see a
   limiter set up in another file or at a proxy, so the report asks to check the code before changing it.
+- `nestjs-route-no-throttle` (medium, 0.0.6): the same for NestJS: `@Post('login')` and similar, or `@Post()` in a
+  controller whose path is `login`, with no `@Throttle` or `ThrottlerGuard` on the route or class. Dropped when any
+  file registers `ThrottlerGuard` for the whole app (`APP_GUARD` or `useGlobalGuards`): a rule marked
+  `internal: true` records that, and a rule with `suppressed-by: <id>` is dropped when it matched. Internal rules are
+  never shown.
+- `express-vote-route-no-identity` (medium, 0.0.6): a vote, like or rating route whose handler never looks at who is
+  calling (no session, token, cookie, user, IP) and has no limit. Vote routes that need a token from a join step are
+  not matched; that join step is what `express-route-no-rate-limit` checks.
 - Maintainers update versions in `scripts/update-lock.mjs` and run `npm run update-lock`.
 
 ## Output

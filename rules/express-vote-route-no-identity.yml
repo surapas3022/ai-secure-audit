@@ -1,0 +1,44 @@
+rules:
+  - id: express-vote-route-no-identity
+    languages: [javascript, typescript]
+    severity: WARNING
+    message: >-
+      This route takes votes, likes or ratings, and its handler never checks who is sending them or how often. Anyone
+      can call it again and again with a short script, so the count means nothing. Tie each vote to an identity the
+      server issued (a sign-in, a one-time code, a token from a join step that is itself limited), keep one vote per
+      identity on the server, and add a per-IP limit. Remembering "already voted" in the browser (localStorage, a
+      cookie the server does not check) does not stop a script.
+    metadata:
+      category: code
+      cwe: 'CWE-799: Improper Control of Interaction Frequency'
+      asvs: 'OWASP ASVS 5.0 V2.4.1 (anti-automation)'
+      confidence: MEDIUM
+      limitations: >-
+        Express-style routes with a literal path only. Does not see a check in middleware applied with app.use in
+        another file, or a limit at a proxy or CDN.
+    patterns:
+      - pattern: $APP.$METHOD("$PATH", ...)
+      - metavariable-regex:
+          metavariable: $APP
+          regex: ^(app|router|server|api|[A-Za-z]*[Rr]outer|[A-Za-z]*Routes)$
+      - metavariable-regex:
+          metavariable: $METHOD
+          regex: ^(post|put|patch|all)$
+      - metavariable-regex:
+          metavariable: $PATH
+          # Admin routes sit behind a login already.
+          regex: (?i)^(?!.*/admin/).*(^|[/_-])(votes?|ballots?|polls?|likes?|upvotes?|ratings?|rate|reactions?|react|cheers?|claps?)([/_?-]|$)
+      # The handler (or a middleware named in the route) looks at who is calling, or limits them.
+      - pattern-not-regex: (?i)(req\.(user|session|auth|ip|cookies|signedCookies|headers)|session|token|cookie|auth|voter|account|userId|user_id|fingerprint|rate.?limit|limiter|throttl|bucket|limited\(|limits\.)
+      - pattern-not-inside: |
+          import $X from "=~/^(express-rate-limit|rate-limiter-flexible|express-slow-down|express-brute)$/";
+          ...
+      - pattern-not-inside: |
+          import { ... } from "=~/^(express-rate-limit|rate-limiter-flexible|express-slow-down|express-brute)$/";
+          ...
+      - pattern-not-inside: |
+          $X = require("=~/^(express-rate-limit|rate-limiter-flexible|express-slow-down|express-brute)$/");
+          ...
+      - pattern-not-inside: |
+          $X = require("=~/^(express-rate-limit|rate-limiter-flexible|express-slow-down|express-brute)$/").$Y;
+          ...

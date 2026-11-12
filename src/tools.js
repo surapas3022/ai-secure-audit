@@ -11,8 +11,14 @@ export function lockedTools() {
   return lock.tools;
 }
 
+// Linux without glibc (Alpine and other musl systems) needs builds of its own for tools that are not static.
+export function isMusl() {
+  if (process.platform !== 'linux') return false;
+  return !process.report?.getReport?.().header?.glibcVersionRuntime;
+}
+
 export function platformKey() {
-  return `${process.platform}-${process.arch}`;
+  return `${process.platform}-${process.arch}${isMusl() ? '-musl' : ''}`;
 }
 
 export function cacheDir() {

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 const lock = JSON.parse(readFileSync(new URL('../tools.lock.json', import.meta.url), 'utf8'));
-const PLATFORMS = ['darwin-arm64', 'darwin-x64', 'linux-arm64', 'linux-x64', 'win32-arm64', 'win32-x64'];
+const PLATFORMS = ['darwin-arm64', 'darwin-x64', 'linux-arm64', 'linux-x64', 'linux-arm64-musl', 'linux-x64-musl', 'win32-arm64', 'win32-x64'];
 
 test('every basic tool is pinned for every platform with a sha256 and a GitHub release URL', () => {
   for (const id of Object.keys(lock.tools)) {
