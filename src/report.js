@@ -115,6 +115,7 @@ export function reportMarkdown(result, date) {
   lines.push('- Database rules such as Supabase row-level security or Firebase security rules (planned)');
   lines.push('- Anything about the live server or website');
   lines.push('- Docker/config mistakes: not in this version yet (coming in v0.3)');
+  for (const g of result.coverage?.gaps ?? []) lines.push(`- ${g}`);
   lines.push('');
   lines.push('## Tools');
   lines.push('');
@@ -143,6 +144,7 @@ export function consoleSummary(result, outRel) {
     '  if a limit or check exists somewhere the rule cannot see (another file, the proxy) before changing anything.',
     '- Not checked: whether one user can reach another user\'s data, business rules, and (in this version)',
     '  Docker/config files. Say so.',
+    ...(result.coverage?.gaps ?? []).map((g) => `- ${g} Tell the user.`),
     ...(failed.length ? ['- Some tools did not run (see NOT RUN above). Tell the user the check is incomplete.'] : []),
   ].join('\n');
 }

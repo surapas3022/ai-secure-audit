@@ -85,3 +85,15 @@ test('opengrep: internal rules are never shown, and drop the findings that name 
   assert.deepEqual(opengrep.parse({ results: [route, global] }, ctx), []);
   assert.deepEqual(opengrep.parse({ results: [global] }, ctx), []);
 });
+
+test('osv-scanner: the fix version ignores GIT ranges (commit hashes)', () => {
+  const json = { results: [{ source: { path: '/tmp/asa-fixture/requirements.txt' }, packages: [{
+    package: { name: 'requests', version: '2.19.1', ecosystem: 'PyPI' },
+    vulnerabilities: [{ id: 'PYSEC-2018-28', summary: 's', affected: [{ package: { name: 'requests' }, ranges: [
+      { type: 'GIT', events: [{ introduced: '0' }, { fixed: 'c45d7c49ea75133e52ab22a8e9e13173938e36ff' }] },
+      { type: 'ECOSYSTEM', events: [{ introduced: '0' }, { fixed: '2.20.0' }] },
+    ] }] }],
+    groups: [{ ids: ['PYSEC-2018-28'], aliases: ['CVE-2018-18074'], max_severity: '9.8' }],
+  }] }] };
+  assert.match(osv.parse(json, ctx)[0].fix, /^Upgrade requests to 2\.20\.0 or later/);
+});

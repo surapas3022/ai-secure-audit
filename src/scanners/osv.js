@@ -28,7 +28,11 @@ function fixedVersion(vulns, pkgName) {
   for (const v of vulns) {
     for (const a of v.affected ?? []) {
       if (a.package?.name !== pkgName) continue;
-      for (const r of a.ranges ?? []) for (const e of r.events ?? []) if (e.fixed) fixed.push(e.fixed);
+      // GIT ranges give commit hashes, not versions a user can install.
+      for (const r of a.ranges ?? []) {
+        if (r.type === 'GIT') continue;
+        for (const e of r.events ?? []) if (e.fixed) fixed.push(e.fixed);
+      }
     }
   }
   return fixed.sort(compareVersions).at(-1) ?? null;

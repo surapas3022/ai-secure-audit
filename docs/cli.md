@@ -1,6 +1,6 @@
 # CLI design: `npx ai-secure-audit`
 
-Status: `scan`, `retest` and `tools` work from a clone (`node bin/ai-secure-audit.js`) and from npm 0.0.1. Version 0.0.3 adds osv-scanner. Version 0.0.4 also marks a key taken out of a file that still exists as `(git history only)`, not only a key in a deleted file. Version 0.0.5 adds opengrep with the first rule of this kit. Version 0.0.6 adds rules for NestJS and for vote routes, and runs on Alpine Linux. v0.1 is not released yet.
+Status: `scan`, `retest` and `tools` work from a clone (`node bin/ai-secure-audit.js`) and from npm 0.0.1. Version 0.0.3 adds osv-scanner. Version 0.0.4 also marks a key taken out of a file that still exists as `(git history only)`, not only a key in a deleted file. Version 0.0.5 adds opengrep with the first rule of this kit. Version 0.0.6 adds rules for NestJS and for vote routes, and runs on Alpine Linux. Version 0.0.7 says in the report which languages and lockfiles were not checked or not tested. v0.1 is not released yet.
 `init`, `mcp` and `--advanced` are not implemented.
 
 ## Who runs it
@@ -67,6 +67,14 @@ Options: `--json` (print machine-readable output only), `--fail-on <critical|hig
 - `express-vote-route-no-identity` (medium, 0.0.6): a vote, like or rating route whose handler never looks at who is
   calling (no session, token, cookie, user, IP) and has no limit. Vote routes that need a token from a join step are
   not matched; that join step is what `express-route-no-rate-limit` checks.
+- **What was not checked.** The CLI counts source files by extension and lists lockfiles (skipping installed and
+  generated folders), then writes `coverage` into `findings.json`: each language with its file count and whether this
+  kit has code rules for it (taken from the `languages:` of the rule files), and each lockfile with whether its
+  ecosystem has been tested with known answers. Gaps go into the report under "What this check could not see" and
+  into the instructions printed for the AI, so "0 findings" for a PHP or Go project is not read as "checked".
+  Lockfiles tested with known answers: `package-lock.json` (npm), `composer.lock` (PHP), `go.mod` (Go), `Cargo.lock`
+  (Rust), `Gemfile.lock` (Ruby), `packages.lock.json` (NuGet), `requirements.txt` (Python). Code rules: JavaScript and
+  TypeScript only (Express, NestJS); `.vue` and `.svelte` files are not read by them.
 - Maintainers update versions in `scripts/update-lock.mjs` and run `npm run update-lock`.
 
 ## Output

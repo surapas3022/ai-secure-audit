@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { cacheDir, ensureTool, lockedTools } from './tools.js';
 import { sortAndNumber } from './findings.js';
+import { coverageGaps, projectCoverage } from './coverage.js';
 import gitleaks from './scanners/gitleaks.js';
 import osv from './scanners/osv.js';
 import opengrep from './scanners/opengrep.js';
@@ -78,11 +79,13 @@ export async function scan(target, { log = () => {}, version }) {
     }
   }
 
+  const coverage = projectCoverage(root);
   const result = {
     generator: `ai-secure-audit ${version}`,
     check: 'basic',
     target: { git: isGit, commit: ctx.commit, uncommitted_changes: ctx.dirty },
     tools: runs,
+    coverage: { ...coverage, gaps: coverageGaps(coverage) },
     notes: [
       'Not checked by this tool: whether one user can reach another user\'s data, business rules, and anything running on a server.',
       'Code rules (category code) are this kit\'s own opengrep rules. They can be wrong: check the location before changing code.',

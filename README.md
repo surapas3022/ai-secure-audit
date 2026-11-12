@@ -122,6 +122,9 @@ Every tool sends traffic only to hosts listed in `.audit/targets.yml`, and produ
 - It does not certify anything. A report states which standard and level were self-assessed, on which date and commit.
 - Automated tools cannot fully check business logic or whether one user can reach another user's data;
   the report lists these for manual review.
+- Code rules exist for JavaScript and TypeScript only so far. Secrets are found in any language, and libraries in
+  npm, PHP, Go, Rust, Ruby, C# and Python lockfiles; the report says which languages and lockfiles it could not
+  check, so "0 findings" is never read as "checked".
 
 ## Privacy
 
