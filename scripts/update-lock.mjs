@@ -29,6 +29,22 @@ const TOOLS = {
       return { name, binary: name };
     },
   },
+  opengrep: {
+    repo: 'opengrep/opengrep',
+    version: '1.33.1',
+    license: 'LGPL-2.1',
+    // No checksums file is published; GitHub records a sha256 for every release asset (the release is also
+    // signed with cosign: *.sig / *.cert beside each binary).
+    checksums: null,
+    asset(v, os, arch) {
+      // No Windows arm64 build; Windows on Arm runs the x64 binary. manylinux needs glibc (not Alpine).
+      if (os === 'win32') return { name: 'opengrep_windows_x86.exe', binary: 'opengrep_windows_x86.exe' };
+      const o = { darwin: 'osx', linux: 'manylinux' }[os];
+      const a = { x64: 'x86', arm64: os === 'darwin' ? 'arm64' : 'aarch64' }[arch];
+      const name = `opengrep_${o}_${a}`;
+      return { name, binary: name };
+    },
+  },
 };
 
 function archiveKind(name) {
@@ -41,9 +57,17 @@ const lock = { lockfileVersion: 1, tools: {} };
 for (const [id, t] of Object.entries(TOOLS)) {
   const base = `https://github.com/${t.repo}/releases/download/v${t.version}`;
   const sums = new Map();
-  for (const line of (await get(`${base}/${t.checksums(t.version)}`)).toString('utf8').split('\n')) {
-    const m = line.trim().match(/^([0-9a-f]{64})\s+\*?(\S+)$/);
-    if (m) sums.set(m[2], m[1]);
+  if (t.checksums) {
+    for (const line of (await get(`${base}/${t.checksums(t.version)}`)).toString('utf8').split('\n')) {
+      const m = line.trim().match(/^([0-9a-f]{64})\s+\*?(\S+)$/);
+      if (m) sums.set(m[2], m[1]);
+    }
+  } else {
+    const release = JSON.parse((await get(`https://api.github.com/repos/${t.repo}/releases/tags/v${t.version}`)).toString('utf8'));
+    for (const a of release.assets) {
+      const m = (a.digest ?? '').match(/^sha256:([0-9a-f]{64})$/);
+      if (m) sums.set(a.name, m[1]);
+    }
   }
   const platforms = {};
   for (const p of PLATFORMS) {

@@ -14,6 +14,7 @@ Use this section when someone points you at this repository and asks you to chec
 - Findings come only from the tool. Do not add, remove or re-rate them. Your own observations go in a separate section and do not count as findings.
 - Never print or repeat a key's value, even when you can read the file.
 - Use each finding's `fix` field. A key that is in git or was deployed must be rotated at the provider first: deleting it from the code is not enough. A finding marked `not_committed` can be moved out of the code without rotating, unless the key was shared or pasted somewhere else.
+- Findings of type `code` come from pattern rules and can be wrong. Read the code at the location. If a limit or check exists where the rule cannot see it (another file, the reverse proxy), tell the user, but do not remove the finding.
 - `retest` keeps a key from git history as `still open` even after it is rotated, because the tool cannot know it was cancelled. Tell the user this.
 - Ask before rewriting git history.
 - Say what was not checked: whether one user can reach another user's data, business rules, database rules, the live server, and Docker or config files. "0 problems" does not mean the app is safe.

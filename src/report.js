@@ -14,6 +14,10 @@ const PLAIN = {
     what: 'A setting in your Docker or infrastructure files is unsafe.',
     why: 'Unsafe defaults make a break-in easier or do more damage once someone is in.',
   },
+  code: {
+    what: 'Your code has a pattern that apps built with AI often get wrong.',
+    why: 'These mistakes are easy to find from the outside, and a short script is enough to use them.',
+  },
 };
 
 function where(f) {
@@ -77,6 +81,22 @@ export function reportMarkdown(result, date) {
     lines.push('');
   }
 
+  // Medium and low findings still need a fix written out, not only a row in the table.
+  const rest = findings.filter((f) => !top.includes(f) && f.fix).slice(0, 10);
+  if (rest.length) {
+    lines.push(top.length ? '## Then check these' : '## Check these');
+    lines.push('');
+    for (const f of rest) {
+      const p = PLAIN[f.category] ?? {};
+      lines.push(`### ${f.id}: ${f.title}`);
+      lines.push('');
+      if (p.what) lines.push(`**What is wrong:** ${p.what} Found at ${whereSentence(f)}.`);
+      if (f.category === 'code') lines.push('**Check first:** this comes from a code rule, which can be wrong. Look at the code before changing it.');
+      lines.push(`**How to fix it:** ${f.fix}`);
+      lines.push('');
+    }
+  }
+
   if (findings.length) {
     lines.push('## All findings');
     lines.push('');
@@ -119,6 +139,8 @@ export function consoleSummary(result, outRel) {
     '- Ask before changing code. Fix one finding at a time; run `npx ai-secure-audit retest` after.',
     '- Use each finding\'s fix field. A key that is in git or was deployed must be rotated at the provider: deleting it from the code is not enough.',
     '- A finding marked not_committed can be moved out of the code without rotating, unless the key was shared or pasted somewhere else.',
+    '- Findings of type code come from pattern rules and can be wrong. Read the code at that location and tell the user',
+    '  if a limit or check exists somewhere the rule cannot see (another file, the proxy) before changing anything.',
     '- Not checked: whether one user can reach another user\'s data, business rules, and (in this version)',
     '  Docker/config files. Say so.',
     ...(failed.length ? ['- Some tools did not run (see NOT RUN above). Tell the user the check is incomplete.'] : []),

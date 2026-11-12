@@ -1,6 +1,7 @@
 # ai-secure-audit
 
-> Status: 0.0.x on npm runs the basic secret check with `npx ai-secure-audit`. v0.1 is not released yet.
+> Status: 0.0.x on npm runs the basic check with `npx ai-secure-audit`: secrets, libraries with known holes and, from
+> 0.0.5, the first code rule. v0.1 is not released yet.
 >
 > **มือใหม่เริ่มตรงนี้:** [learn/](learn/) ควรตรวจอะไรก่อน เพราะอะไร และแก้ยังไง (ภาษาไทย)
 >
@@ -87,9 +88,10 @@ SHA-256 checksums. The check reads only your project folder and never uploads yo
 | Passwords, API keys and tokens in the code, in files not committed yet, in git history and in build output (v0.1) | gitleaks | MIT |
 | Libraries with known vulnerabilities (v0.2) | osv-scanner (offline database) | Apache-2.0 |
 | Dockerfile and config mistakes (v0.3) | trivy config | Apache-2.0 |
-| Code mistakes AI-generated apps often make (see below), planned | opengrep + this kit's own rules | LGPL-2.1 (rules: Apache-2.0) |
+| Code mistakes AI-generated apps often make (see below), one rule at a time: sign-in, sign-up and join routes with no limit on repeats (0.0.5); the rest planned | opengrep + this kit's own rules | LGPL-2.1 (rules: Apache-2.0) |
 
-Common mistakes the kit's own rules look for: secret keys in frontend code or `NEXT_PUBLIC_*` variables, Supabase
+Common mistakes the kit's own rules look for: sign-in, sign-up and join routes that anyone can call without limit
+(Express, 0.0.5), secret keys in frontend code or `NEXT_PUBLIC_*` variables, Supabase
 `service_role` key outside the server, tables without row-level security, Firebase rules that allow everything,
 API routes without an auth check, permission checks done only in the browser, committed `.env` files, CORS `*`,
 and stack traces returned to users.

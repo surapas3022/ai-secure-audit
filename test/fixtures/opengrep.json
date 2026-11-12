@@ -1,0 +1,156 @@
+{
+  "version": "1.33.1",
+  "results": [
+    {
+      "check_id": "tmp.asa.rules.express-route-no-rate-limit",
+      "path": "/tmp/asa-fixture/routes.js",
+      "start": {
+        "line": 7,
+        "col": 1,
+        "offset": 212
+      },
+      "end": {
+        "line": 10,
+        "col": 3,
+        "offset": 371
+      },
+      "extra": {
+        "message": "This route accepts sign-ins, sign-ups, joins or codes, and nothing in this file limits how often one person can call it. A short script can repeat it thousands of times: guess passwords or codes, or create as many accounts or voters as it likes. Add a per-IP or per-account limit (for example express-rate-limit, or a counter in the handler) and lock out after repeated failures. If a limiter is applied somewhere this rule cannot see (another file, the reverse proxy), confirm it actually covers this route.",
+        "metadata": {
+          "category": "code",
+          "cwe": "CWE-307: Improper Restriction of Excessive Authentication Attempts",
+          "asvs": "OWASP ASVS 5.0 V6.3.1 (brute force), V2.4.1 (anti-automation)",
+          "confidence": "MEDIUM",
+          "limitations": "Express-style routes with a literal path only. Does not see limiters defined in another file and applied with app.use, limits set at a proxy or CDN, or frameworks with decorators (NestJS). Vote routes are not matched: a vote usually needs an identity from a join or sign-in route, and that route is what has to be limited."
+        },
+        "severity": "WARNING",
+        "lines": "app.post('/api/admin/login', (req, res) => {\n  if (req.body.password !== process.env.ADMIN_PASSWORD) return res.status(401).end();\n  res.json({ ok: true });\n});",
+        "is_ignored": false,
+        "validation_state": "NO_VALIDATOR",
+        "engine_kind": "OSS"
+      }
+    },
+    {
+      "check_id": "tmp.asa.rules.express-route-no-rate-limit",
+      "path": "/tmp/asa-fixture/routes.js",
+      "start": {
+        "line": 13,
+        "col": 1,
+        "offset": 413
+      },
+      "end": {
+        "line": 15,
+        "col": 3,
+        "offset": 488
+      },
+      "extra": {
+        "message": "This route accepts sign-ins, sign-ups, joins or codes, and nothing in this file limits how often one person can call it. A short script can repeat it thousands of times: guess passwords or codes, or create as many accounts or voters as it likes. Add a per-IP or per-account limit (for example express-rate-limit, or a counter in the handler) and lock out after repeated failures. If a limiter is applied somewhere this rule cannot see (another file, the reverse proxy), confirm it actually covers this route.",
+        "metadata": {
+          "category": "code",
+          "cwe": "CWE-307: Improper Restriction of Excessive Authentication Attempts",
+          "asvs": "OWASP ASVS 5.0 V6.3.1 (brute force), V2.4.1 (anti-automation)",
+          "confidence": "MEDIUM",
+          "limitations": "Express-style routes with a literal path only. Does not see limiters defined in another file and applied with app.use, limits set at a proxy or CDN, or frameworks with decorators (NestJS). Vote routes are not matched: a vote usually needs an identity from a join or sign-in route, and that route is what has to be limited."
+        },
+        "severity": "WARNING",
+        "lines": "app.post('/api/join', (req, res) => {\n  res.json({ token: newToken() });\n});",
+        "is_ignored": false,
+        "validation_state": "NO_VALIDATOR",
+        "engine_kind": "OSS"
+      }
+    },
+    {
+      "check_id": "tmp.asa.rules.express-route-no-rate-limit",
+      "path": "/tmp/asa-fixture/routes.js",
+      "start": {
+        "line": 18,
+        "col": 1,
+        "offset": 530
+      },
+      "end": {
+        "line": 21,
+        "col": 3,
+        "offset": 633
+      },
+      "extra": {
+        "message": "This route accepts sign-ins, sign-ups, joins or codes, and nothing in this file limits how often one person can call it. A short script can repeat it thousands of times: guess passwords or codes, or create as many accounts or voters as it likes. Add a per-IP or per-account limit (for example express-rate-limit, or a counter in the handler) and lock out after repeated failures. If a limiter is applied somewhere this rule cannot see (another file, the reverse proxy), confirm it actually covers this route.",
+        "metadata": {
+          "category": "code",
+          "cwe": "CWE-307: Improper Restriction of Excessive Authentication Attempts",
+          "asvs": "OWASP ASVS 5.0 V6.3.1 (brute force), V2.4.1 (anti-automation)",
+          "confidence": "MEDIUM",
+          "limitations": "Express-style routes with a literal path only. Does not see limiters defined in another file and applied with app.use, limits set at a proxy or CDN, or frameworks with decorators (NestJS). Vote routes are not matched: a vote usually needs an identity from a join or sign-in route, and that route is what has to be limited."
+        },
+        "severity": "WARNING",
+        "lines": "router.post('/register', async (req, res) => {\n  await saveUser(req.body);\n  res.json({ ok: true });\n});",
+        "is_ignored": false,
+        "validation_state": "NO_VALIDATOR",
+        "engine_kind": "OSS"
+      }
+    },
+    {
+      "check_id": "tmp.asa.rules.express-route-no-rate-limit",
+      "path": "/tmp/asa-fixture/routes.js",
+      "start": {
+        "line": 24,
+        "col": 1,
+        "offset": 675
+      },
+      "end": {
+        "line": 24,
+        "col": 41,
+        "offset": 715
+      },
+      "extra": {
+        "message": "This route accepts sign-ins, sign-ups, joins or codes, and nothing in this file limits how often one person can call it. A short script can repeat it thousands of times: guess passwords or codes, or create as many accounts or voters as it likes. Add a per-IP or per-account limit (for example express-rate-limit, or a counter in the handler) and lock out after repeated failures. If a limiter is applied somewhere this rule cannot see (another file, the reverse proxy), confirm it actually covers this route.",
+        "metadata": {
+          "category": "code",
+          "cwe": "CWE-307: Improper Restriction of Excessive Authentication Attempts",
+          "asvs": "OWASP ASVS 5.0 V6.3.1 (brute force), V2.4.1 (anti-automation)",
+          "confidence": "MEDIUM",
+          "limitations": "Express-style routes with a literal path only. Does not see limiters defined in another file and applied with app.use, limits set at a proxy or CDN, or frameworks with decorators (NestJS). Vote routes are not matched: a vote usually needs an identity from a join or sign-in route, and that route is what has to be limited."
+        },
+        "severity": "WARNING",
+        "lines": "app.put('/auth/reset-password', handler);",
+        "is_ignored": false,
+        "validation_state": "NO_VALIDATOR",
+        "engine_kind": "OSS"
+      }
+    },
+    {
+      "check_id": "tmp.asa.rules.express-route-no-rate-limit",
+      "path": "/tmp/asa-fixture/routes.js",
+      "start": {
+        "line": 27,
+        "col": 1,
+        "offset": 757
+      },
+      "end": {
+        "line": 27,
+        "col": 37,
+        "offset": 793
+      },
+      "extra": {
+        "message": "This route accepts sign-ins, sign-ups, joins or codes, and nothing in this file limits how often one person can call it. A short script can repeat it thousands of times: guess passwords or codes, or create as many accounts or voters as it likes. Add a per-IP or per-account limit (for example express-rate-limit, or a counter in the handler) and lock out after repeated failures. If a limiter is applied somewhere this rule cannot see (another file, the reverse proxy), confirm it actually covers this route.",
+        "metadata": {
+          "category": "code",
+          "cwe": "CWE-307: Improper Restriction of Excessive Authentication Attempts",
+          "asvs": "OWASP ASVS 5.0 V6.3.1 (brute force), V2.4.1 (anti-automation)",
+          "confidence": "MEDIUM",
+          "limitations": "Express-style routes with a literal path only. Does not see limiters defined in another file and applied with app.use, limits set at a proxy or CDN, or frameworks with decorators (NestJS). Vote routes are not matched: a vote usually needs an identity from a join or sign-in route, and that route is what has to be limited."
+        },
+        "severity": "WARNING",
+        "lines": "userRouter.post('/sign-up', handler);",
+        "is_ignored": false,
+        "validation_state": "NO_VALIDATOR",
+        "engine_kind": "OSS"
+      }
+    }
+  ],
+  "errors": [],
+  "paths": {
+    "scanned": [
+      "/tmp/asa-fixture/routes.js"
+    ]
+  }
+}

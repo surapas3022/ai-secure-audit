@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import gitleaks from '../src/scanners/gitleaks.js';
 import osv from '../src/scanners/osv.js';
+import opengrep from '../src/scanners/opengrep.js';
 import { sortAndNumber } from '../src/findings.js';
 
 const fixture = (name) => JSON.parse(readFileSync(new URL(`./fixtures/${name}.json`, import.meta.url), 'utf8'));
@@ -52,4 +53,26 @@ test('gitleaks: a secret in a deleted file is marked as git history only', () =>
   const f = gitleaks.parse(fixture('gitleaks'), { ...ctx, fileExists: () => false });
   assert.equal(f[0].evidence[0].history_only, true);
   assert.deepEqual(f[0].evidence[0].commits, ['0327e0e']);
+});
+
+test('opengrep: rule id without the config path, relative location, first line only', () => {
+  const f = opengrep.parse(fixture('opengrep'), ctx);
+  assert.deepEqual(f.map((x) => x.evidence[0].location), ['routes.js:7', 'routes.js:13', 'routes.js:18', 'routes.js:24', 'routes.js:27']);
+  assert.ok(f.every((x) => x.source.rule_id === 'express-route-no-rate-limit'));
+  assert.ok(f.every((x) => x.category === 'code' && x.severity.normalized === 'medium'));
+  assert.ok(f.every((x) => !x.evidence[0].detail.includes('\n')));
+  assert.ok(f.every((x) => x.title.length > 0 && x.fix.length > 0));
+});
+
+test('opengrep: no results gives no findings', () => {
+  assert.deepEqual(opengrep.parse({ results: [] }, ctx), []);
+  assert.deepEqual(opengrep.parse(null, ctx), []);
+});
+
+test('opengrep: local rules only, rule test files and installed code are never scanned', () => {
+  const args = opengrep.args({ root: '/tmp/asa-fixture' }, '/tmp/out.json');
+  assert.ok(args.includes('--disable-version-check'));
+  assert.ok(args[args.indexOf('--config') + 1].endsWith('rules/') || args[args.indexOf('--config') + 1].endsWith('rules\\'));
+  const excluded = args.filter((a, i) => args[i - 1] === '--exclude');
+  for (const x of ['node_modules', 'express-route-no-rate-limit.js']) assert.ok(excluded.includes(x), x);
 });

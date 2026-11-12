@@ -1,6 +1,6 @@
 # CLI design: `npx ai-secure-audit`
 
-Status: `scan`, `retest` and `tools` work from a clone (`node bin/ai-secure-audit.js`) and from npm 0.0.1. Version 0.0.3 adds osv-scanner. Version 0.0.4 also marks a key taken out of a file that still exists as `(git history only)`, not only a key in a deleted file. v0.1 is not released yet.
+Status: `scan`, `retest` and `tools` work from a clone (`node bin/ai-secure-audit.js`) and from npm 0.0.1. Version 0.0.3 adds osv-scanner. Version 0.0.4 also marks a key taken out of a file that still exists as `(git history only)`, not only a key in a deleted file. Version 0.0.5 adds opengrep with the first rule of this kit. v0.1 is not released yet.
 `init`, `mcp` and `--advanced` are not implemented.
 
 ## Who runs it
@@ -41,7 +41,7 @@ Options: `--json` (print machine-readable output only), `--fail-on <critical|hig
 - Pinned in `tools.lock.json`: version, download URL and SHA-256 for each platform.
 - Downloaded on first use to the user cache (`~/.cache/ai-secure-audit/` or `%LOCALAPPDATA%\ai-secure-audit\`).
 - A checksum mismatch stops the run. The CLI never falls back to a version that is not pinned.
-- Basic tier today: gitleaks and osv-scanner. Other tools are added one at a time, each after passing its own tests
+- Basic tier today: gitleaks, osv-scanner and opengrep. Other tools are added one at a time, each after passing its own tests
   (see Planned coverage in the README).
 - osv-scanner reads lockfiles (`package-lock.json`, `pnpm-lock.yaml`, `yarn.lock`, `pubspec.lock`, `requirements.txt`
   and others) and checks them against an offline copy of the public OSV database. The first run downloads the
@@ -50,6 +50,14 @@ Options: `--json` (print machine-readable output only), `--fail-on <critical|hig
 - In a git repository gitleaks runs twice, over the commits and over the current files, so a key that is not committed
   yet is still found. Files git ignores are left out, except build output (`dist/`, `build/`, `.next/static/`,
   `.output/public/`, `.svelte-kit/output/client/`), because that is what gets deployed. Files over 20 MB are skipped.
+- opengrep runs only this kit's own rules from `rules/` (one `.yml` per rule, with a test file of the same name beside
+  it; `opengrep scan --test rules/` runs them). Rules from the Semgrep Registry are not used: their license is not open
+  source. Files git ignores are scanned too, except installed and generated code (`node_modules/`, `dist/`, `build/`,
+  `.next/`, `.nuxt/`, `.output/`, `.svelte-kit/`, `coverage/`, `vendor/`). opengrep publishes no checksums file, so the
+  lock takes the SHA-256 GitHub records for each release asset. Linux builds need glibc (not Alpine).
+- First rule, `express-route-no-rate-limit` (medium): an Express route whose path looks like sign-in, sign-up, join,
+  reset or a code check, in a file with no limiter package loaded and no limit named in the route. It cannot see a
+  limiter set up in another file or at a proxy, so the report asks to check the code before changing it.
 - Maintainers update versions in `scripts/update-lock.mjs` and run `npm run update-lock`.
 
 ## Output

@@ -1,0 +1,47 @@
+rules:
+  - id: express-route-no-rate-limit
+    languages: [javascript, typescript]
+    severity: WARNING
+    message: >-
+      This route accepts sign-ins, sign-ups, joins or codes, and nothing in this file limits how often one person can
+      call it. A short script can repeat it thousands of times: guess passwords or codes, or create as many accounts
+      or voters as it likes. Add a per-IP or per-account limit (for example express-rate-limit, or a counter in the
+      handler) and lock out after repeated failures. If a limiter is applied somewhere this rule cannot see (another
+      file, the reverse proxy), confirm it actually covers this route.
+    metadata:
+      category: code
+      cwe: 'CWE-307: Improper Restriction of Excessive Authentication Attempts'
+      asvs: 'OWASP ASVS 5.0 V6.3.1 (brute force), V2.4.1 (anti-automation)'
+      confidence: MEDIUM
+      limitations: >-
+        Express-style routes with a literal path only. Does not see limiters defined in another file and applied
+        with app.use, limits set at a proxy or CDN, or frameworks with decorators (NestJS). Vote routes are not matched: a vote usually needs an identity from a join or
+        sign-in route, and that route is what has to be limited.
+    patterns:
+      - pattern-either:
+          - pattern: $APP.$METHOD("$PATH", ...)
+      - metavariable-regex:
+          metavariable: $APP
+          regex: ^(app|router|server|api|[A-Za-z]*[Rr]outer|[A-Za-z]*Routes)$
+      - metavariable-regex:
+          metavariable: $METHOD
+          regex: ^(post|put|patch|all)$
+      - metavariable-regex:
+          metavariable: $PATH
+          # Admin routes other than the admin sign-in sit behind a login already.
+          regex: (?i)^(?!.*/admin/(?!log-?in|sign-?in)).*(log-?in|sign-?in|sign-?up|register|join|otp|verify|forgot|reset|password|passcode|redeem)
+      # The route itself names a limiter, or its handler counts attempts.
+      - pattern-not-regex: (?i)(rate.?limit|limiter|throttl|slow.?down|brute|bucket|lockout|too.?many|\blimited\(|\blimits\.)
+      # A known limiter package is loaded in this file.
+      - pattern-not-inside: |
+          import $X from "=~/^(express-rate-limit|rate-limiter-flexible|express-slow-down|express-brute)$/";
+          ...
+      - pattern-not-inside: |
+          import { ... } from "=~/^(express-rate-limit|rate-limiter-flexible|express-slow-down|express-brute)$/";
+          ...
+      - pattern-not-inside: |
+          $X = require("=~/^(express-rate-limit|rate-limiter-flexible|express-slow-down|express-brute)$/");
+          ...
+      - pattern-not-inside: |
+          $X = require("=~/^(express-rate-limit|rate-limiter-flexible|express-slow-down|express-brute)$/").$Y;
+          ...

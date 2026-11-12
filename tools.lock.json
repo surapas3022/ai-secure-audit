@@ -86,6 +86,49 @@
           "binary": "osv-scanner_windows_amd64.exe"
         }
       }
+    },
+    "opengrep": {
+      "version": "1.33.1",
+      "license": "LGPL-2.1",
+      "repo": "https://github.com/opengrep/opengrep",
+      "platforms": {
+        "darwin-arm64": {
+          "url": "https://github.com/opengrep/opengrep/releases/download/v1.33.1/opengrep_osx_arm64",
+          "sha256": "a17c1881bb40e3214266a7a291cf4f2ae3bc56c1715628b5712d2ec816bc3e2d",
+          "archive": "raw",
+          "binary": "opengrep_osx_arm64"
+        },
+        "darwin-x64": {
+          "url": "https://github.com/opengrep/opengrep/releases/download/v1.33.1/opengrep_osx_x86",
+          "sha256": "c3bd18e0d898d44e28419d95dad57c8928bb46ab32889a0ee1f72a87ad9627af",
+          "archive": "raw",
+          "binary": "opengrep_osx_x86"
+        },
+        "linux-arm64": {
+          "url": "https://github.com/opengrep/opengrep/releases/download/v1.33.1/opengrep_manylinux_aarch64",
+          "sha256": "d1433f63a90b8bc0b6ad4b498a13b372b856ce9a754a43484ba4920fe2d76dcf",
+          "archive": "raw",
+          "binary": "opengrep_manylinux_aarch64"
+        },
+        "linux-x64": {
+          "url": "https://github.com/opengrep/opengrep/releases/download/v1.33.1/opengrep_manylinux_x86",
+          "sha256": "46e8133cc490f9f50518061590ce2f6be5a08afaeda034471c0ceda4b3899808",
+          "archive": "raw",
+          "binary": "opengrep_manylinux_x86"
+        },
+        "win32-arm64": {
+          "url": "https://github.com/opengrep/opengrep/releases/download/v1.33.1/opengrep_windows_x86.exe",
+          "sha256": "132e606e071bdd3928286fddc893198a6106a90820d46e21197e0ace1a23e0c1",
+          "archive": "raw",
+          "binary": "opengrep_windows_x86.exe"
+        },
+        "win32-x64": {
+          "url": "https://github.com/opengrep/opengrep/releases/download/v1.33.1/opengrep_windows_x86.exe",
+          "sha256": "132e606e071bdd3928286fddc893198a6106a90820d46e21197e0ace1a23e0c1",
+          "archive": "raw",
+          "binary": "opengrep_windows_x86.exe"
+        }
+      }
     }
   }
 }
