@@ -1,6 +1,6 @@
 # CLI design: `npx ai-secure-audit`
 
-Status: `scan`, `retest` and `tools` work from a clone (`node bin/ai-secure-audit.js`) and from npm 0.0.1. Version 0.0.3 adds osv-scanner. Version 0.0.4 also marks a key taken out of a file that still exists as `(git history only)`, not only a key in a deleted file. Version 0.0.5 adds opengrep with the first rule of this kit. Version 0.0.6 adds rules for NestJS and for vote routes, and runs on Alpine Linux. Version 0.0.7 says in the report which languages and lockfiles were not checked or not tested. Version 0.0.8 points those languages to [the AI review prompt](ai-review-prompt.md). v0.1 is not released yet.
+Status: `scan`, `retest` and `tools` work from a clone (`node bin/ai-secure-audit.js`) and from npm 0.0.1. Version 0.0.3 adds osv-scanner. Version 0.0.4 also marks a key taken out of a file that still exists as `(git history only)`, not only a key in a deleted file. Version 0.0.5 adds opengrep with the first rule of this kit. Version 0.0.6 adds rules for NestJS and for vote routes, and runs on Alpine Linux. Version 0.0.7 says in the report which languages and lockfiles were not checked or not tested. Version 0.0.8 points those languages to [the AI review prompt](ai-review-prompt.md). Version 0.0.9 adds a rule for session checks done on a plain object. v0.1 is not released yet.
 `init`, `mcp` and `--advanced` are not implemented.
 
 ## Who runs it
@@ -67,6 +67,12 @@ Options: `--json` (print machine-readable output only), `--fail-on <critical|hig
 - `express-vote-route-no-identity` (medium, 0.0.6): a vote, like or rating route whose handler never looks at who is
   calling (no session, token, cookie, user, IP) and has no limit. Vote routes that need a token from a join step are
   not matched; that join step is what `express-route-no-rate-limit` checks.
+- `express-session-lookup-plain-object` (high, 0.0.9): a session, token or admin check that looks up a value from the
+  request (cookie, header, query, body, or a home-made `cookies(req)` parser) in a plain object, such as
+  `if (db.adminSessions[cookie])`. Every plain object has `constructor`, `toString` and `__proto__`, so a request with
+  one of those names passes. Not matched when the token is hashed first, upper-cased, checked with `Object.hasOwn`, or
+  the store is a `Map` or `Object.create(null)`. Only a lookup tested directly (in an `if`, a ternary, `!` or `in`)
+  and stores named like sessions, tokens, admins or keys; a lookup stored in a variable and tested later is missed.
 - **What was not checked.** The CLI counts source files by extension and lists lockfiles (skipping installed and
   generated folders), then writes `coverage` into `findings.json`: each language with its file count and whether this
   kit has code rules for it (taken from the `languages:` of the rule files), and each lockfile with whether its

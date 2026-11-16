@@ -74,7 +74,7 @@ test('opengrep: local rules only, rule test files and installed code are never s
   assert.ok(args.includes('--disable-version-check'));
   assert.ok(args[args.indexOf('--config') + 1].endsWith('rules/') || args[args.indexOf('--config') + 1].endsWith('rules\\'));
   const excluded = args.filter((a, i) => args[i - 1] === '--exclude');
-  for (const x of ['node_modules', 'express-route-no-rate-limit.js', 'nestjs-route-no-throttle.ts', 'express-vote-route-no-identity.js']) assert.ok(excluded.includes(x), x);
+  for (const x of ['node_modules', 'express-route-no-rate-limit.js', 'nestjs-route-no-throttle.ts', 'express-vote-route-no-identity.js', 'express-session-lookup-plain-object.js']) assert.ok(excluded.includes(x), x);
 });
 
 test('opengrep: internal rules are never shown, and drop the findings that name them in suppressed-by', () => {

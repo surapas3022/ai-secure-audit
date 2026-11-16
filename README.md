@@ -1,7 +1,8 @@
 # ai-secure-audit
 
 > Status: 0.0.x on npm runs the basic check with `npx ai-secure-audit`: secrets, libraries with known holes and, from
-> 0.0.5, code rules for routes anyone can repeat without limit. v0.1 is not released yet.
+> 0.0.5, code rules for routes anyone can repeat without limit and, from 0.0.9, for session checks that a built-in
+> name such as `constructor` passes. v0.1 is not released yet.
 >
 > **มือใหม่เริ่มตรงนี้:** [learn/](learn/) ควรตรวจอะไรก่อน เพราะอะไร และแก้ยังไง (ภาษาไทย)
 >
@@ -88,10 +89,11 @@ SHA-256 checksums. The check reads only your project folder and never uploads yo
 | Passwords, API keys and tokens in the code, in files not committed yet, in git history and in build output (v0.1) | gitleaks | MIT |
 | Libraries with known vulnerabilities (v0.2) | osv-scanner (offline database) | Apache-2.0 |
 | Dockerfile and config mistakes (v0.3) | trivy config | Apache-2.0 |
-| Code mistakes AI-generated apps often make (see below), one rule at a time: sign-in, sign-up and join routes with no limit on repeats (Express 0.0.5, NestJS 0.0.6), vote and like routes that never check who is voting (0.0.6); the rest planned | opengrep + this kit's own rules | LGPL-2.1 (rules: Apache-2.0) |
+| Code mistakes AI-generated apps often make (see below), one rule at a time: sign-in, sign-up and join routes with no limit on repeats (Express 0.0.5, NestJS 0.0.6), vote and like routes that never check who is voting (0.0.6), session, token or admin checks that a built-in name like `constructor` passes (0.0.9); the rest planned | opengrep + this kit's own rules | LGPL-2.1 (rules: Apache-2.0) |
 
 Common mistakes the kit's own rules look for: sign-in, sign-up and join routes that anyone can call without limit
-(Express and NestJS), vote routes that never check who is voting, secret keys in frontend code or `NEXT_PUBLIC_*` variables, Supabase
+(Express and NestJS), vote routes that never check who is voting, session checks done on a plain object (a cookie
+`admin=constructor` passes), secret keys in frontend code or `NEXT_PUBLIC_*` variables, Supabase
 `service_role` key outside the server, tables without row-level security, Firebase rules that allow everything,
 API routes without an auth check, permission checks done only in the browser, committed `.env` files, CORS `*`,
 and stack traces returned to users.

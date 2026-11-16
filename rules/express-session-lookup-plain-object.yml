@@ -1,0 +1,85 @@
+rules:
+  - id: express-session-lookup-plain-object
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: >-
+      A session, token or admin check looks up a value from the request (a cookie, header, query or body field) in a
+      plain object. Every plain object already has keys such as "constructor", "toString" and "__proto__", so a
+      request that sends one of those names passes the check without knowing any real token. Store sessions in a Map
+      or an object made with Object.create(null), check with Object.hasOwn first, or look up a hash of the token
+      (which also keeps raw tokens out of storage).
+    metadata:
+      category: code
+      cwe: 'CWE-287: Improper Authentication'
+      asvs: 'OWASP ASVS 5.0 V7.2.1 (session tokens verified by a trusted back end)'
+      confidence: MEDIUM
+      limitations: >-
+        Express-style request objects (req or request) only, and only a lookup tested directly (in an if, a ternary,
+        a negation or "in"). Misses a lookup stored in a variable and tested later, a request value passed into
+        another function first, and stores whose name does not look like sessions, tokens, admins or keys.
+    mode: taint
+    pattern-sources:
+      - patterns:
+          - pattern-either:
+              - pattern: $REQ.cookies
+              - pattern: $REQ.signedCookies
+              - pattern: $REQ.headers
+              - pattern: $REQ.query
+              - pattern: $REQ.body
+              - pattern: $REQ.params
+              - pattern: $REQ.get(...)
+              - pattern: $REQ.header(...)
+              # A home-made cookie parser: cookies(req), parseCookies(req), ...
+              - patterns:
+                  - pattern: $PARSE($REQ, ...)
+                  - metavariable-regex:
+                      metavariable: $PARSE
+                      regex: (?i)cookie
+          - metavariable-regex:
+              metavariable: $REQ
+              regex: ^(req|request)$
+    pattern-sanitizers:
+      # A hash of the token is never a built-in key name.
+      - patterns:
+          - pattern: $HASH(...)
+          - metavariable-regex:
+              metavariable: $HASH
+              regex: (?i)(hash|sha\d*|digest|hmac)
+      - pattern: $X.digest(...)
+      # Upper case cannot spell constructor or __proto__.
+      - pattern: $X.toUpperCase()
+    pattern-sinks:
+      - patterns:
+          - pattern-either:
+              - pattern-inside: if (<... $O[$K] ...>) ...
+              - pattern-inside: '!$O[$K]'
+              - pattern-inside: '$O[$K] ? $A : $B'
+              - pattern-inside: '($O[$K]) ? $A : $B'
+              - pattern-inside: $K in $O
+          - pattern-either:
+              - pattern: $NAME[$K]
+              - pattern: $X.$NAME[$K]
+              - pattern: $X.$Y.$NAME[$K]
+              - pattern: $K in $NAME
+              - pattern: $K in $X.$NAME
+          - focus-metavariable: $K
+          # The store's own name (db.adminSessions -> adminSessions). Matched on the last identifier because a
+          # regex on a whole member expression does not match in taint mode (opengrep 1.33.1).
+          - metavariable-regex:
+              metavariable: $NAME
+              regex: (?i)(session|token|admin|auth|apikey|api_key|login|cred|secret|grant|allow)
+          # The same check guarded by an own-property test is safe.
+          - pattern-not-inside: if (<... Object.hasOwn($S, $K) ...>) ...
+          - pattern-not-inside: if (<... $S.hasOwnProperty($K) ...>) ...
+          - pattern-not-inside: if (<... Object.prototype.hasOwnProperty.call($S, $K) ...>) ...
+          - pattern-not-inside: Object.hasOwn($S, $K) && ...
+          # A store made without a prototype has none of those keys.
+          - pattern-not-inside: |
+              $NAME = Object.create(null);
+              ...
+          - pattern-not-inside: |
+              $NAME = { __proto__: null };
+              ...
+          - pattern-not-inside: |
+              $X.$NAME = Object.create(null);
+              ...
