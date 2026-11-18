@@ -165,6 +165,61 @@
           "binary": "opengrep_windows_x86.exe"
         }
       }
+    },
+    "trivy": {
+      "version": "0.76.1",
+      "license": "Apache-2.0",
+      "repo": "https://github.com/aquasecurity/trivy",
+      "platforms": {
+        "darwin-arm64": {
+          "url": "https://github.com/aquasecurity/trivy/releases/download/v0.76.1/trivy_0.76.1_macOS-ARM64.tar.gz",
+          "sha256": "11a9b6cd2752011b54f01ea4bd0dbfa9f0c41dc6538d5a3f9d23955f471bf4e5",
+          "archive": "tar.gz",
+          "binary": "trivy"
+        },
+        "darwin-x64": {
+          "url": "https://github.com/aquasecurity/trivy/releases/download/v0.76.1/trivy_0.76.1_macOS-64bit.tar.gz",
+          "sha256": "7aa762eacd582052d053b62dcf972a1ab058abe39a57ccae234ed8894945b6b7",
+          "archive": "tar.gz",
+          "binary": "trivy"
+        },
+        "linux-arm64": {
+          "url": "https://github.com/aquasecurity/trivy/releases/download/v0.76.1/trivy_0.76.1_Linux-ARM64.tar.gz",
+          "sha256": "e174dff2a6dba5e3ae41f8d0537a6324405bd08132497340304c6b20e0f16a1f",
+          "archive": "tar.gz",
+          "binary": "trivy"
+        },
+        "linux-x64": {
+          "url": "https://github.com/aquasecurity/trivy/releases/download/v0.76.1/trivy_0.76.1_Linux-64bit.tar.gz",
+          "sha256": "c7cbe3137fb8a48a17574bede3dd6beb16742d1e9772929940fc90082c39d9c0",
+          "archive": "tar.gz",
+          "binary": "trivy"
+        },
+        "linux-arm64-musl": {
+          "url": "https://github.com/aquasecurity/trivy/releases/download/v0.76.1/trivy_0.76.1_Linux-ARM64.tar.gz",
+          "sha256": "e174dff2a6dba5e3ae41f8d0537a6324405bd08132497340304c6b20e0f16a1f",
+          "archive": "tar.gz",
+          "binary": "trivy"
+        },
+        "linux-x64-musl": {
+          "url": "https://github.com/aquasecurity/trivy/releases/download/v0.76.1/trivy_0.76.1_Linux-64bit.tar.gz",
+          "sha256": "c7cbe3137fb8a48a17574bede3dd6beb16742d1e9772929940fc90082c39d9c0",
+          "archive": "tar.gz",
+          "binary": "trivy"
+        },
+        "win32-arm64": {
+          "url": "https://github.com/aquasecurity/trivy/releases/download/v0.76.1/trivy_0.76.1_windows-64bit.zip",
+          "sha256": "1051f49cb22d5284f43425f72aad9cda63ca12ceb92e7caa06903490c82dc9bf",
+          "archive": "zip",
+          "binary": "trivy.exe"
+        },
+        "win32-x64": {
+          "url": "https://github.com/aquasecurity/trivy/releases/download/v0.76.1/trivy_0.76.1_windows-64bit.zip",
+          "sha256": "1051f49cb22d5284f43425f72aad9cda63ca12ceb92e7caa06903490c82dc9bf",
+          "archive": "zip",
+          "binary": "trivy.exe"
+        }
+      }
     }
   }
 }

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import gitleaks from '../src/scanners/gitleaks.js';
 import osv from '../src/scanners/osv.js';
+import trivy from '../src/scanners/trivy.js';
 import opengrep from '../src/scanners/opengrep.js';
 import { sortAndNumber } from '../src/findings.js';
 
@@ -32,6 +33,16 @@ test('osv-scanner: one finding per advisory group, relative path, fix version', 
 
 test('osv-scanner: no report (no lockfiles) gives no findings', () => {
   assert.deepEqual(osv.parse(null, ctx), []);
+});
+
+test('trivy: only failed checks', () => {
+  const f = trivy.parse(fixture('trivy'), ctx);
+  assert.deepEqual(f.map((x) => x.source.rule_id).sort(), ['DS-0002', 'DS-0026']);
+  assert.ok(f.every((x) => x.category === 'config'));
+});
+
+test('trivy: no report gives no findings', () => {
+  assert.deepEqual(trivy.parse(null, ctx), []);
 });
 
 test('secrets sort before dependencies', () => {

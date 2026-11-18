@@ -15,7 +15,7 @@ Not reading? Ask your AI assistant instead:
 | 3 | Database rules left open (Supabase, Firebase) | Outsiders can read the database without going through your website | A person checks; the tool does not cover this yet |
 | 4 | [API with no login check, or a check only in the web page](04-missing-login-check.en.md) | Calling the API directly skips the check | Mostly a person checks; `npx ai-secure-audit` catches a session check that the word `constructor` passes (0.0.9) |
 | 5 | [Libraries with known holes](05-vulnerable-libraries.en.md) | The attack is often already published, but most fixes are just an update | `npx ai-secure-audit` (needs a lockfile) |
-| 6 | Unsafe Docker or server settings | Makes the damage spread further; only matters if you run your own server | The tool does not cover this yet |
+| 6 | Unsafe Docker or server settings | Makes the damage spread further; only matters if you run your own server | `npx ai-secure-audit` checks Dockerfiles from 0.0.10 · Compose files and the server itself are not checked yet (the report names the Compose files it skipped) |
 
 This order is this project's judgement for beginners, based on how much damage each problem does and how easy it is to attack. It is not a ranking from a standard. The usual reference is the [OWASP Top 10:2025][owasp], which ranks risks for web apps overall: broken access control (our item 2) is first, security misconfiguration second, and software supply chain failures third.
 

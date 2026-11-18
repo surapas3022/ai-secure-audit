@@ -2,7 +2,8 @@
 
 > Status: 0.0.x on npm runs the basic check with `npx ai-secure-audit`: secrets, libraries with known holes and, from
 > 0.0.5, code rules for routes anyone can repeat without limit and, from 0.0.9, for session checks that a built-in
-> name such as `constructor` passes. v0.1 is not released yet.
+> name such as `constructor` passes. From 0.0.10 it also checks Dockerfiles with trivy (Compose files are not read yet,
+> and the report says so). v0.1 is not released yet.
 >
 > **มือใหม่เริ่มตรงนี้:** [learn/](learn/) ควรตรวจอะไรก่อน เพราะอะไร และแก้ยังไง (ภาษาไทย)
 >
@@ -88,7 +89,7 @@ SHA-256 checksums. The check reads only your project folder and never uploads yo
 |---|---|---|
 | Passwords, API keys and tokens in the code, in files not committed yet, in git history and in build output (v0.1) | gitleaks | MIT |
 | Libraries with known vulnerabilities (v0.2) | osv-scanner (offline database) | Apache-2.0 |
-| Dockerfile and config mistakes (v0.3) | trivy config | Apache-2.0 |
+| Dockerfile and config mistakes (0.0.10): Dockerfile, Kubernetes, Helm, Terraform, CloudFormation, Azure ARM, Ansible. trivy does not read Docker Compose files; the report names any it found as not checked | trivy config | Apache-2.0 |
 | Code mistakes AI-generated apps often make (see below), one rule at a time: sign-in, sign-up and join routes with no limit on repeats (Express 0.0.5, NestJS 0.0.6), vote and like routes that never check who is voting (0.0.6), session, token or admin checks that a built-in name like `constructor` passes (0.0.9); the rest planned | opengrep + this kit's own rules | LGPL-2.1 (rules: Apache-2.0) |
 
 Common mistakes the kit's own rules look for: sign-in, sign-up and join routes that anyone can call without limit

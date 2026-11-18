@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { coverageGaps, projectCoverage, ruleLanguages } from '../src/coverage.js';
+import { coverageGaps, isComposeFile, projectCoverage, ruleLanguages } from '../src/coverage.js';
+import { BASIC_SCANNERS } from '../src/scan.js';
 
 function project(files) {
   const root = mkdtempSync(join(tmpdir(), 'asa-coverage-'));
@@ -77,4 +78,51 @@ test('coverage: a lockfile from an ecosystem without a known-answer case is call
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
+});
+
+test('coverage: file names that count as Docker Compose', () => {
+  for (const n of ['compose.yaml', 'compose.yml', 'docker-compose.yml', 'docker-compose.yaml', 'docker-compose.prod.yml', 'compose.override.yaml']) {
+    assert.ok(isComposeFile(n), n);
+  }
+  for (const n of ['composer.json', 'composer.lock', 'compose.json', 'my-compose.yml', 'docker-compose.yml.bak', 'Dockerfile']) {
+    assert.ok(!isComposeFile(n), n);
+  }
+});
+
+test('coverage: Compose files are named as not checked, since trivy does not read them', () => {
+  const root = project({ 'server.js': '', 'compose.yaml': 'services: {}\n', 'deploy/docker-compose.prod.yml': 'services: {}\n' });
+  try {
+    const cov = projectCoverage(root);
+    assert.deepEqual(cov.compose, ['compose.yaml', 'deploy/docker-compose.prod.yml']);
+    const gap = coverageGaps(cov).find((g) => g.startsWith('Docker Compose:'));
+    assert.ok(gap, 'a Docker Compose gap');
+    assert.match(gap, /compose\.yaml, deploy\/docker-compose\.prod\.yml were not checked/);
+    assert.match(gap, /"0 findings" says nothing/);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('coverage: a Dockerfile without Compose is not a gap', () => {
+  const root = project({ 'server.js': '', 'Dockerfile': 'FROM node:22-alpine\n', 'package-lock.json': '{}' });
+  try {
+    const cov = projectCoverage(root);
+    assert.deepEqual(cov.compose, []);
+    assert.deepEqual(coverageGaps(cov), []);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('coverage: Compose files inside node_modules are not counted', () => {
+  const root = project({ 'node_modules/x/docker-compose.yml': 'services: {}\n', 'server.js': '' });
+  try {
+    assert.deepEqual(projectCoverage(root).compose, []);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('scan: trivy runs with the basic check', () => {
+  assert.deepEqual(BASIC_SCANNERS.map((s) => s.id), ['gitleaks', 'osv-scanner', 'opengrep', 'trivy']);
 });

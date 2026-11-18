@@ -27,6 +27,10 @@ const LANGUAGES = {
   vue: ['.vue'],
   svelte: ['.svelte'],
 };
+// Docker Compose files: trivy (the config checker) does not read them, so the report must say they were not checked.
+// compose.yaml, compose.yml, docker-compose.yml, docker-compose.prod.yaml and the like.
+export const isComposeFile = (name) => /^(docker-)?compose(\.[\w-]+)?\.ya?ml$/i.test(name);
+
 const BY_EXT = new Map(Object.entries(LANGUAGES).flatMap(([lang, exts]) => exts.map((e) => [e, lang])));
 
 // Lockfiles osv-scanner reads, and whether this kit has tested that ecosystem with known-answer cases.
@@ -81,16 +85,18 @@ export function projectCoverage(root, { rulesDir, limit = 200_000 } = {}) {
   const covered = ruleLanguages(rulesDir);
   const counts = new Map();
   const lockfiles = [];
+  const compose = [];
   for (const f of files) {
     const name = basename(f);
     const ext = name.includes('.') ? name.slice(name.lastIndexOf('.')).toLowerCase() : '';
     const lang = BY_EXT.get(ext);
     if (lang) counts.set(lang, (counts.get(lang) ?? 0) + 1);
     if (LOCKFILES[name]) lockfiles.push({ file: f, ...LOCKFILES[name] });
+    if (isComposeFile(name)) compose.push(f);
   }
   const languages = [...counts].sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1))
     .map(([language, n]) => ({ language, files: n, code_rules: covered.has(language) }));
-  return { languages, lockfiles, truncated: files.length >= limit };
+  return { languages, lockfiles, compose, truncated: files.length >= limit };
 }
 
 // Plain sentences for the report and for the AI assistant. Empty when everything found is covered.
@@ -107,6 +113,11 @@ export function coverageGaps(cov) {
   if (untested.length) {
     gaps.push(`Libraries: ${untested.map((l) => `${l.file} (${l.ecosystem})`).join(', ')} ` +
       'were read by osv-scanner, but this kit has not tested that ecosystem with known answers yet.');
+  }
+  if (cov.compose?.length) {
+    gaps.push(`Docker Compose: ${cov.compose.join(', ')} ${cov.compose.length === 1 ? 'was' : 'were'} not checked. trivy reads ` +
+      'Dockerfiles but not Compose files, so settings such as privileged: true, network_mode: host, a mounted ' +
+      'docker.sock or a database port open to every network were not looked at; "0 findings" says nothing about them.');
   }
   if (cov.truncated) gaps.push('The project has more files than this check counts; the lists above may be incomplete.');
   return gaps;

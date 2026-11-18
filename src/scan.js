@@ -7,10 +7,11 @@ import { coverageGaps, projectCoverage } from './coverage.js';
 import gitleaks from './scanners/gitleaks.js';
 import osv from './scanners/osv.js';
 import opengrep from './scanners/opengrep.js';
+import trivy from './scanners/trivy.js';
 
 // Scanners are released one at a time, each after passing its own tests (see CLAUDE.md).
 // Scanners still in development are kept outside this repository until they pass.
-export const BASIC_SCANNERS = [gitleaks, osv, opengrep];
+export const BASIC_SCANNERS = [gitleaks, osv, opengrep, trivy];
 
 function git(root, args) {
   const r = spawnSync('git', ['-C', root, ...args], { encoding: 'utf8' });
@@ -89,7 +90,8 @@ export async function scan(target, { log = () => {}, version }) {
     notes: [
       'Not checked by this tool: whether one user can reach another user\'s data, business rules, and anything running on a server.',
       'Code rules (category code) are this kit\'s own opengrep rules. They can be wrong: check the location before changing code.',
-      `Not checked yet in this version: Docker/config files (trivy, coming in v0.3).`,
+      'Config files are checked by trivy: Dockerfiles, Kubernetes, Helm, Terraform, CloudFormation, Azure ARM and Ansible files. ' +
+        'trivy does not read Docker Compose files; coverage.gaps names any that were not checked.',
     ],
     findings: sortAndNumber(findings),
   };
