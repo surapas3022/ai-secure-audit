@@ -3,7 +3,7 @@
 > Status: 0.0.x on npm runs the basic check with `npx ai-secure-audit`: secrets, libraries with known holes and, from
 > 0.0.5, code rules for routes anyone can repeat without limit and, from 0.0.9, for session checks that a built-in
 > name such as `constructor` passes. From 0.0.10 it also checks Dockerfiles with trivy (Compose files are not read yet,
-> and the report says so). v0.1 is not released yet.
+> and the report says so), and from 0.0.11 it warns when a Docker build would copy these results into the image. v0.1 is not released yet.
 >
 > **มือใหม่เริ่มตรงนี้:** [learn/](learn/) ควรตรวจอะไรก่อน เพราะอะไร และแก้ยังไง (ภาษาไทย)
 >
@@ -59,7 +59,10 @@ Or ask your AI assistant: *"Run `node <path-to>/ai-secure-audit/bin/ai-secure-au
 results in simple words, and help me fix the most serious ones first."*
 
 Results go to `.audit/out/` in your project (`report.md` for people, `findings.json` for tools and AI). That folder
-ignores itself in git, so results are not committed by accident.
+ignores itself in git, so results are not committed by accident. Git is not the only way out, though: a `Dockerfile`
+with `COPY . .` puts every file in the folder into the image. From 0.0.11 the report warns (under "About these
+results") when a `Dockerfile` at the top of the project copies the whole folder and `.dockerignore` does not leave out
+`.audit`.
 
 ## Repository layout
 

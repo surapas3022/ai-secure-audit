@@ -108,6 +108,13 @@ export function reportMarkdown(result, date) {
     lines.push('');
   }
 
+  if (result.notices?.length) {
+    lines.push('## About these results');
+    lines.push('');
+    for (const n of result.notices) lines.push(`- ${n.message}`);
+    lines.push('');
+  }
+
   lines.push('## What this check could not see');
   lines.push('');
   lines.push('- Whether one user can open or change another user\'s data (for example by changing an id in the URL)');
@@ -143,6 +150,7 @@ export function consoleSummary(result, outRel) {
     '  if a limit or check exists somewhere the rule cannot see (another file, the proxy) before changing anything.',
     '- Not checked: whether one user can reach another user\'s data, and business rules. Say so.',
     ...(result.coverage?.gaps ?? []).map((g) => `- ${g} Tell the user.`),
+    ...(result.notices ?? []).map((n) => `- ${n.message} Tell the user, and ask before editing the file.`),
     ...(failed.length ? ['- Some tools did not run (see NOT RUN above). Tell the user the check is incomplete.'] : []),
   ].join('\n');
 }
