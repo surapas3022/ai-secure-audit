@@ -34,7 +34,7 @@ The user only has to say something like:
 | `mcp` | runs a stdio MCP server with `scan` and `get_findings` tools (later) | as `scan` |
 | `tools` | lists tool versions, licenses and cache location | none |
 
-Options: `--json` (print machine-readable output only), `--fail-on <critical|high|medium>` (for CI).
+Options: `--report simple` (also write `report-simple.md`, a short to-do list in plain words: what is wrong, where, what to do; several advisories for one library become one item. Tested on macOS and Linux, not Windows), `--json` (print machine-readable output only), `--fail-on <critical|high|medium>` (for CI).
 
 ## Tools
 

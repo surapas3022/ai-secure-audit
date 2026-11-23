@@ -2,6 +2,7 @@ import { copyFileSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { scan, outDir } from './scan.js';
 import { reportMarkdown, consoleSummary } from './report.js';
+import { reportSimple } from './report-simple.js';
 import { atOrAbove, SEVERITY_ORDER } from './findings.js';
 import { cacheDir, lockedTools, platformKey } from './tools.js';
 
@@ -20,6 +21,7 @@ Commands
 
 Options
   --json               print findings.json to stdout instead of the summary
+  --report simple      also write report-simple.md: a short to-do list in plain words
   --fail-on <level>    exit 1 if a finding is at or above: ${SEVERITY_ORDER.slice(0, 4).join(', ')}
   --advanced           add the Docker-based advanced tools (not available yet)
   -h, --help           show this help
@@ -28,12 +30,14 @@ Options
 Results are written to <path>/.audit/out/ (git-ignored automatically).`;
 
 function parseArgs(argv) {
-  const opts = { command: 'scan', path: '.', json: false, failOn: null, advanced: false };
+  const opts = { command: 'scan', path: '.', json: false, failOn: null, advanced: false, report: null };
   const rest = [];
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--json') opts.json = true;
     else if (a === '--advanced') opts.advanced = true;
+    else if (a === '--report') opts.report = argv[++i];
+    else if (a.startsWith('--report=')) opts.report = a.slice(9);
     else if (a === '--fail-on') opts.failOn = argv[++i];
     else if (a.startsWith('--fail-on=')) opts.failOn = a.slice(10);
     else if (a === '-h' || a === '--help') opts.command = 'help';
@@ -43,6 +47,7 @@ function parseArgs(argv) {
   }
   if (opts.command === 'scan' && ['scan', 'retest', 'tools', 'init', 'mcp', 'help'].includes(rest[0])) opts.command = rest.shift();
   if (rest[0]) opts.path = rest[0];
+  if (opts.report && opts.report !== 'simple') throw new Error('--report must be: simple');
   if (opts.failOn && !SEVERITY_ORDER.slice(0, 4).includes(opts.failOn)) throw new Error(`--fail-on must be one of ${SEVERITY_ORDER.slice(0, 4).join(', ')}`);
   return opts;
 }
@@ -69,12 +74,15 @@ async function runScan(opts, { retest }) {
 
   const { root, out, result } = await scan(opts.path, { log, version: pkg.version });
   writeFileSync(join(out, 'report.md'), reportMarkdown(result, new Date().toISOString().slice(0, 10)));
+  const date = new Date().toISOString().slice(0, 10);
+  if (opts.report === 'simple') writeFileSync(join(out, 'report-simple.md'), reportSimple(result, date));
   const r = relative(process.cwd(), out);
   const outRel = (r && !r.startsWith('..') ? r : out).split('\\').join('/');
 
   if (opts.json) process.stdout.write(JSON.stringify(result, null, 2) + '\n');
   else {
     process.stdout.write(consoleSummary(result, outRel) + '\n');
+    if (opts.report === 'simple') process.stdout.write(`\nPlain to-do list: ${outRel}/report-simple.md\n`);
     if (prev) {
       const d = compare(prev, result);
       writeFileSync(join(out, 'retest.json'), JSON.stringify({
