@@ -168,10 +168,22 @@ Inputs: `path` (default `.`), `fail-on` (`critical`, `high`, `medium`, `low`; de
 
 ## live: check the TLS of one host
 
+Create `targets.yml` next to where you run the command. List only hosts you own or may test, and keep the file out of git:
+
+```yaml
+targets:
+  - host: dev.example.com
+    scheme: https     # https (default) or http
+    env: dev          # dev (default) or prod
+```
+
 ```bash
-cp config/targets.example.yml targets.yml    # list only hosts you own or may test; keep this file out of git
 npx ai-secure-audit live dev.example.com
 ```
+
+(The same example ships in the package as `config/targets.example.yml`.)
+
+**Status: first release of `live` (0.0.13).** Tried on servers on the same machine (a deliberately weak TLS server and a deliberately weak web server, results compared with what was expected beforehand) and on a GitHub-hosted Linux runner. **Not tried on a real remote site**, not on Windows, not with a real https site under `--zap`, and the "no Docker" path is only unit-tested. Treat the first runs on your own site as a trial and compare with another tool (for example SSL Labs for TLS).
 
 `live` talks to a real server, so it is a separate command from `scan` and it is strict:
 
