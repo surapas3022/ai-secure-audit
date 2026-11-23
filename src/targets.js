@@ -10,7 +10,12 @@ export function parseTargets(text) {
   let seenHeader = false;
   let cur = null;
   const bad = (n, why) => { throw new Error(`targets file, line ${n}: ${why}`); };
-  const finish = (n) => { if (cur && !cur.host) bad(n, 'an entry has no host'); };
+  const finish = (n) => {
+    if (!cur) return;
+    if (!cur.host) bad(n, 'an entry has no host');
+    // The default port follows the scheme: https 443, http 80.
+    if (cur.port === null) cur.port = cur.scheme === 'http' ? 80 : 443;
+  };
 
   text.split(/\r?\n/).forEach((raw, i) => {
     const n = i + 1;
@@ -26,7 +31,7 @@ export function parseTargets(text) {
     const [, , dash, key, value] = m;
     if (dash) {
       finish(n);
-      cur = { host: null, port: 443, env: 'dev' };
+      cur = { host: null, port: null, scheme: 'https', env: 'dev' };
       targets.push(cur);
     } else if (!cur) bad(n, 'a setting before any "- host:" entry');
     if (key === 'host') {
@@ -36,6 +41,9 @@ export function parseTargets(text) {
     } else if (key === 'port') {
       if (!/^\d{1,5}$/.test(value) || +value < 1 || +value > 65535) bad(n, `"${value}" is not a port`);
       cur.port = +value;
+    } else if (key === 'scheme') {
+      if (!['https', 'http'].includes(value)) bad(n, 'scheme must be https or http');
+      cur.scheme = value;
     } else if (key === 'env') {
       if (!['dev', 'prod'].includes(value)) bad(n, 'env must be dev or prod');
       cur.env = value;
@@ -60,11 +68,13 @@ export function resolveTarget(arg, targets, { allowProd = false } = {}) {
   const m = /^([A-Za-z0-9.-]+)(?::(\d{1,5}))?$/.exec(arg ?? '');
   if (!m || !HOST.test(m[1])) throw new Error(`"${arg}" is not host or host:port (no scheme, path, wildcard or range)`);
   const host = m[1].toLowerCase();
+  // Without a port, only an entry on its scheme's default port (https 443, http 80) can match.
+  const isDefault = (t) => t.port === (t.scheme === 'http' ? 80 : 443);
+  const hit = targets.find((t) => t.host === host && (m[2] ? t.port === +m[2] : isDefault(t)));
   const port = m[2] ? +m[2] : 443;
-  const hit = targets.find((t) => t.host === host && t.port === port);
   if (!hit) throw new Error(`${host}:${port} is not in the targets file: refusing to check it`);
   if (hit.env === 'prod' && !allowProd) {
-    throw new Error(`${host}:${port} is marked prod: add --allow-prod only when the owner has told you to check production`);
+    throw new Error(`${host}:${hit.port} is marked prod: add --allow-prod only when the owner has told you to check production`);
   }
   return hit;
 }

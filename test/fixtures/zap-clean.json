@@ -1,0 +1,216 @@
+{
+ "@version": "2.17.0",
+ "site": [
+  {
+   "@name": "http://host.docker.internal:14500",
+   "alerts": [
+    {
+     "pluginid": "10055",
+     "alertRef": "10055-13",
+     "name": "CSP: Failure to Define Directive with No Fallback",
+     "riskcode": "2",
+     "confidence": "3",
+     "cweid": "693",
+     "solution": "<p>Ensure that your web server, application server, load balancer, etc. is properly configured to set the Content-Security-Policy header.</p>",
+     "count": "2",
+     "instances": [
+      {
+       "uri": "http://host.docker.internal:14500/robots.txt",
+       "method": "GET",
+       "evidence": "default-src 'none'"
+      },
+      {
+       "uri": "http://host.docker.internal:14500/sitemap.xml",
+       "method": "GET",
+       "evidence": "default-src 'none'"
+      }
+     ]
+    },
+    {
+     "pluginid": "10055",
+     "alertRef": "10055-6",
+     "name": "CSP: style-src unsafe-inline",
+     "riskcode": "2",
+     "confidence": "3",
+     "cweid": "693",
+     "solution": "<p>Ensure that your web server, application server, load balancer, etc. is properly configured to set the Content-Security-Policy header.</p>",
+     "count": "1",
+     "instances": [
+      {
+       "uri": "http://host.docker.internal:14500",
+       "method": "GET",
+       "evidence": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src"
+      }
+     ]
+    },
+    {
+     "pluginid": "90004",
+     "alertRef": "90004-2",
+     "name": "Cross-Origin-Embedder-Policy Header Missing or Invalid",
+     "riskcode": "1",
+     "confidence": "2",
+     "cweid": "693",
+     "solution": "<p>Ensure that the application/web server sets the Cross-Origin-Embedder-Policy header appropriately, and that it sets the Cross-Origin-Embedder-Policy header to 'require-corp' for documents.</p><p>If possible, ensure that the end user uses a standards-compliant and modern web browser that supports the Cross-Origin-Embedder-Policy header (https://caniuse.com/mdn-http_headers_cross-origin-embedder-policy).</p>",
+     "count": "1",
+     "instances": [
+      {
+       "uri": "http://host.docker.internal:14500",
+       "method": "GET",
+       "evidence": ""
+      }
+     ]
+    },
+    {
+     "pluginid": "90004",
+     "alertRef": "90004-1",
+     "name": "Cross-Origin-Resource-Policy Header Missing or Invalid",
+     "riskcode": "1",
+     "confidence": "2",
+     "cweid": "693",
+     "solution": "<p>Ensure that the application/web server sets the Cross-Origin-Resource-Policy header appropriately, and that it sets the Cross-Origin-Resource-Policy header to 'same-origin' for all web pages.</p><p>'same-site' is considered as less secured and should be avoided.</p><p>If resources must be shared, set the header to 'cross-origin'.</p><p>If possible, ensure that the end user uses a standards-compliant and modern web browser that supports the Cross-Origin-Resource-Policy header (https://caniuse.com/mdn-http_headers_cross-origin-resource-policy).</p>",
+     "count": "5",
+     "instances": [
+      {
+       "uri": "http://host.docker.internal:14500/css/base.css",
+       "method": "GET",
+       "evidence": ""
+      },
+      {
+       "uri": "http://host.docker.internal:14500/css/vote.css",
+       "method": "GET",
+       "evidence": ""
+      },
+      {
+       "uri": "http://host.docker.internal:14500/fonts/anuphan/400.css",
+       "method": "GET",
+       "evidence": ""
+      },
+      {
+       "uri": "http://host.docker.internal:14500/fonts/anuphan/600.css",
+       "method": "GET",
+       "evidence": ""
+      },
+      {
+       "uri": "http://host.docker.internal:14500/fonts/anuphan/700.css",
+       "method": "GET",
+       "evidence": ""
+      }
+     ]
+    },
+    {
+     "pluginid": "10027",
+     "alertRef": "10027",
+     "name": "Information Disclosure - Suspicious Comments",
+     "riskcode": "0",
+     "confidence": "2",
+     "cweid": "615",
+     "solution": "<p>Remove all comments that return information that may help an attacker and fix any underlying problems they refer to.</p>",
+     "count": "3",
+     "instances": [
+      {
+       "uri": "http://host.docker.internal:14500/js/common.js",
+       "method": "GET",
+       "evidence": "nt quiet: try again later; twice in a row → t"
+      },
+      {
+       "uri": "http://host.docker.internal:14500/js/pow.js",
+       "method": "GET",
+       "evidence": "/** search nonces [from, from+count); retur"
+      },
+      {
+       "uri": "http://host.docker.internal:14500/js/vote.js",
+       "method": "GET",
+       "evidence": "// public snapshot from server"
+      }
+     ]
+    },
+    {
+     "pluginid": "10109",
+     "alertRef": "10109",
+     "name": "Modern Web Application",
+     "riskcode": "0",
+     "confidence": "2",
+     "cweid": "-1",
+     "solution": "<p>This is an informational alert and so no changes are required.</p>",
+     "count": "1",
+     "instances": [
+      {
+       "uri": "http://host.docker.internal:14500",
+       "method": "GET",
+       "evidence": "<script src=\"/js/common.js\"></script>"
+      }
+     ]
+    },
+    {
+     "pluginid": "10049",
+     "alertRef": "10049-3",
+     "name": "Storable and Cacheable Content",
+     "riskcode": "0",
+     "confidence": "2",
+     "cweid": "524",
+     "solution": "<p>Validate that the response does not contain sensitive, personal or user-specific information. If it does, consider the use of the following HTTP response headers, to limit, or prevent the content being stored and retrieved from the cache by another user:</p><p>Cache-Control: no-cache, no-store, must-revalidate, private</p><p>Pragma: no-cache</p><p>Expires: 0</p><p>This configuration directs both HTTP 1.0 and HTTP 1.1 compliant caching servers to not store the response, and to not retrieve the response (without validation) from the cache, in response to a similar request.</p>",
+     "count": "4",
+     "instances": [
+      {
+       "uri": "http://host.docker.internal:14500/fonts/anuphan/400.css",
+       "method": "GET",
+       "evidence": "max-age=2592000"
+      },
+      {
+       "uri": "http://host.docker.internal:14500/fonts/anuphan/600.css",
+       "method": "GET",
+       "evidence": "max-age=2592000"
+      },
+      {
+       "uri": "http://host.docker.internal:14500/fonts/anuphan/700.css",
+       "method": "GET",
+       "evidence": "max-age=2592000"
+      },
+      {
+       "uri": "http://host.docker.internal:14500/sitemap.xml",
+       "method": "GET",
+       "evidence": ""
+      }
+     ]
+    },
+    {
+     "pluginid": "10049",
+     "alertRef": "10049-2",
+     "name": "Storable but Non-Cacheable Content",
+     "riskcode": "0",
+     "confidence": "2",
+     "cweid": "524",
+     "solution": "",
+     "count": "5",
+     "instances": [
+      {
+       "uri": "http://host.docker.internal:14500",
+       "method": "GET",
+       "evidence": "max-age=0"
+      },
+      {
+       "uri": "http://host.docker.internal:14500/css/base.css",
+       "method": "GET",
+       "evidence": "max-age=0"
+      },
+      {
+       "uri": "http://host.docker.internal:14500/css/vote.css",
+       "method": "GET",
+       "evidence": "max-age=0"
+      },
+      {
+       "uri": "http://host.docker.internal:14500/js/common.js",
+       "method": "GET",
+       "evidence": "max-age=0"
+      },
+      {
+       "uri": "http://host.docker.internal:14500/js/vote.js",
+       "method": "GET",
+       "evidence": "max-age=0"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

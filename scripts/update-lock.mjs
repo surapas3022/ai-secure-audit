@@ -102,6 +102,14 @@ const LIVE_TOOLS = {
   testssl: { repo: 'testssl/testssl.sh', version: '3.2.5', license: 'GPL-2.0', entry: 'testssl.sh', platforms: ['darwin-arm64', 'darwin-x64', 'linux-arm64', 'linux-x64'] },
 };
 lock.live_tools = {};
+// ZAP runs from a Docker image, pinned by the digest of its multi-platform index (not by a tag, which can move).
+lock.live_tools.zap = {
+  kind: 'docker',
+  version: '2.17.0',
+  license: 'Apache-2.0',
+  repo: 'https://github.com/zaproxy/zaproxy',
+  image: 'ghcr.io/zaproxy/zaproxy@sha256:9624669db72f54d86c4b46a7064518bd9bf79d8c61a4c31befa9923489f328af',
+};
 for (const [id, t] of Object.entries(LIVE_TOOLS)) {
   const url = `https://github.com/${t.repo}/archive/refs/tags/v${t.version}.tar.gz`;
   const tree_sha256 = treeHash(treeFromTarGz(await get(url), 1));

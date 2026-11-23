@@ -13,8 +13,8 @@ targets:
 
 test('reads hosts, ports, env and defaults; host names are lower-cased', () => {
   assert.deepEqual(parseTargets(ok), [
-    { host: 'dev.example.com', port: 443, env: 'dev' },
-    { host: 'www.example.com', port: 8443, env: 'prod' },
+    { host: 'dev.example.com', port: 443, scheme: 'https', env: 'dev' },
+    { host: 'www.example.com', port: 8443, scheme: 'https', env: 'prod' },
   ]);
 });
 
@@ -62,4 +62,14 @@ test('prod needs --allow-prod every time', () => {
   const t = parseTargets(ok);
   assert.throws(() => resolveTarget('www.example.com:8443', t), /--allow-prod/);
   assert.equal(resolveTarget('www.example.com:8443', t, { allowProd: true }).env, 'prod');
+});
+
+test('scheme: https by default, http allowed; the default port follows the scheme; anything else is an error', () => {
+  const t = parseTargets('targets:\n  - host: a.test\n    scheme: http\n  - host: b.test\n    scheme: http\n    port: 3000\n    env: dev\n  - host: c.test\n');
+  assert.deepEqual(t.map((x) => [x.host, x.scheme, x.port]), [['a.test', 'http', 80], ['b.test', 'http', 3000], ['c.test', 'https', 443]]);
+  assert.throws(() => parseTargets('targets:\n  - host: a.test\n    scheme: ftp\n'), /scheme must be/);
+  assert.equal(resolveTarget('a.test', t).scheme, 'http');           // no port: the entry's default port
+  assert.throws(() => resolveTarget('b.test', t), /not in the targets file/); // b.test has no default-port entry
+  assert.equal(resolveTarget('b.test:3000', t).port, 3000);
+  assert.equal(resolveTarget('c.test', t).port, 443);
 });

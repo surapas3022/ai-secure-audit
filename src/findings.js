@@ -1,5 +1,5 @@
 export const SEVERITY_ORDER = ['critical', 'high', 'medium', 'low', 'info'];
-const CATEGORY_ORDER = ['secret', 'dependency', 'config', 'code', 'tls'];
+const CATEGORY_ORDER = ['secret', 'dependency', 'config', 'code', 'tls', 'web'];
 
 // Stable order: same inputs give byte-identical findings.json.
 export function sortAndNumber(findings) {

@@ -2,6 +2,7 @@
 # `ai-secure-audit live` refuses any host that is not listed here. Keep this file out of git (add it to .gitignore).
 targets:
   - host: dev.example.com
+    scheme: https     # https (default) or http. http has no TLS to check; use it with --zap for a plain-http dev server.
     env: dev          # dev (default) or prod. prod also needs --allow-prod on the command line.
   - host: www.example.com
     port: 443         # optional, default 443

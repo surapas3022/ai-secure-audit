@@ -182,4 +182,19 @@ npx ai-secure-audit live dev.example.com
 
 What becomes a finding: old SSL/TLS versions that are offered, weak cipher groups, an untrusted, mismatched, expired or weakly signed certificate, missing HSTS, and known TLS weaknesses (Heartbleed, ROBOT, POODLE and similar). testssl lists about 170 lines for one host; the rest stay in the raw file. A test testssl could not run (for example RC4 when the local OpenSSL has none) is listed under "Tests that could not run", never shown as a pass.
 
-Not checked: the app itself, HTTP security headers other than HSTS, cookies, other hosts and ports.
+Not checked by the TLS part: the app itself, HTTP security headers other than HSTS, cookies, other hosts and ports.
+
+### `--zap`: the web check
+
+```bash
+npx ai-secure-audit live dev.example.com --zap
+```
+
+Adds the [OWASP ZAP](https://github.com/zaproxy/zaproxy) (Apache-2.0) **baseline** check, run in Docker from an image pinned by digest (`live_tools.zap`). It needs Docker; without it the report says the web check did not run and the exit code is 2. The first run downloads the image (about 1 GB).
+
+- It uses the same `targets.yml` gate as the TLS check. `targets.yml` takes `scheme: https` (default) or `scheme: http` per host. A plain-http host has no TLS, so the TLS part is shown as skipped and `--zap` is required.
+- It is **passive**: ZAP spiders the site for about a minute with ordinary GET requests and reads every response. This tool never runs ZAP's active scan, full scan or API scan.
+- A server on this machine is reached from the container as `host.docker.internal`. On Linux that name points at the Docker bridge, so a local dev server must listen on all interfaces (`0.0.0.0`), not only `127.0.0.1`; stop it when the check is done.
+- Findings are header, cookie and information-leak mistakes: missing CSP, X-Frame-Options, X-Content-Type-Options; cookies without HttpOnly or SameSite; server and framework versions in headers; forms without an anti-CSRF token; scripts from other sites without an integrity hash; known-vulnerable JavaScript libraries; error messages that show internals. One finding per ZAP alert, with the first three places.
+- A finding that rests on a banner the server sends about itself (for example "Apache 2.2 with known holes") is labelled that way and capped at medium, because the banner can be wrong.
+- **What a clean result does not mean:** the baseline does not find XSS, injection, broken login or access control. On the weak test server it found 10 header and cookie problems and **0** of the cross-site scripting that a plain `curl` showed was there. Every report says this.

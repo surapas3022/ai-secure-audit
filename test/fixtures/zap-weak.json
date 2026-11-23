@@ -1,0 +1,414 @@
+{
+ "@version": "2.17.0",
+ "site": [
+  {
+   "@name": "http://host.docker.internal:14501",
+   "alerts": [
+    {
+     "pluginid": "20020",
+     "alertRef": "20020-3",
+     "name": "Apache HTTP Server Version with Known Vulnerabilities",
+     "riskcode": "3",
+     "confidence": "1",
+     "cweid": "1395",
+     "solution": "<p>Upgrade Apache HTTP Server to a supported version which includes fixes for the listed vulnerabilities. Also configure the server not to disclose its version, e.g. by setting \"ServerTokens Prod\" and \"ServerSignature Off\".</p>",
+     "count": "1",
+     "instances": [
+      {
+       "uri": "http://host.docker.internal:14501/transfer",
+       "method": "POST",
+       "evidence": "Apache/2.2.14"
+      }
+     ]
+    },
+    {
+     "pluginid": "10202",
+     "alertRef": "10202",
+     "name": "Absence of Anti-CSRF Tokens",
+     "riskcode": "2",
+     "confidence": "1",
+     "cweid": "352",
+     "solution": "<p>Phase: Architecture and Design</p><p>Use a vetted library or framework that does not allow this weakness to occur or provides constructs that make this weakness easier to avoid.</p><p>For example, use anti-CSRF packages such as the OWASP CSRFGuard.</p><p></p><p>Phase: Implementation</p><p>Ensure that your application is free of cross-site scripting issues, because most CSRF defenses can be bypassed using attacker-controlled script.</p><p></p><p>Phase: Architecture and Design</p><p>Generate a unique nonce for each form, place the nonce into the form, and verify the nonce upon receipt of the form. Be sure that the nonce is not predictable (CWE-330).</p><p>Note that this can be bypassed using XSS.</p><p></p><p>Identify especially dangerous operations. When the user performs a dangerous operation, send a separate confirmation request to ensure that the user intended to perform that operation.</p><p>Note that this can be bypassed using XSS.</p><p></p><p>Use the ESAPI Session Management control.</p><p>This control includes a component for CSRF.</p><p></p><p>Do not use the GET method for any request that triggers a state change.</p><p></p><p>Phase: Implementation</p><p>Check the HTTP Referer header to see if the request originated from an expected page. This could break legitimate functionality, because users or proxies may have disabled sending the Referer for privacy reasons.</p>",
+     "count": "1",
+     "instances": [
+      {
+       "uri": "http://host.docker.internal:14501",
+       "method": "GET",
+       "evidence": "<form method=\"POST\" action=\"/transfer\">"
+      }
+     ]
+    },
+    {
+     "pluginid": "10038",
+     "alertRef": "10038-1",
+     "name": "Content Security Policy (CSP) Header Not Set",
+     "riskcode": "2",
+     "confidence": "3",
+     "cweid": "693",
+     "solution": "<p>Ensure that your web server, application server, load balancer, etc. is configured to set the Content-Security-Policy header.</p>",
+     "count": "2",
+     "instances": [
+      {
+       "uri": "http://host.docker.internal:14501",
+       "method": "GET",
+       "evidence": ""
+      },
+      {
+       "uri": "http://host.docker.internal:14501/search?q=hello",
+       "method": "GET",
+       "evidence": ""
+      }
+     ]
+    },
+    {
+     "pluginid": "10020",
+     "alertRef": "10020-1",
+     "name": "Missing Anti-clickjacking Header",
+     "riskcode": "2",
+     "confidence": "2",
+     "cweid": "1021",
+     "solution": "<p>Modern Web browsers support the Content-Security-Policy and X-Frame-Options HTTP headers. Ensure one of them is set on all web pages returned by your site/app.</p><p>If you expect the page to be framed only by pages on your server (e.g. it's part of a FRAMESET) then you'll want to use SAMEORIGIN, otherwise if you never expect the page to be framed, you should use DENY. Alternatively consider implementing Content Security Policy's \"frame-ancestors\" directive.</p>",
+     "count": "2",
+     "instances": [
+      {
+       "uri": "http://host.docker.internal:14501",
+       "method": "GET",
+       "evidence": ""
+      },
+      {
+       "uri": "http://host.docker.internal:14501/search?q=hello",
+       "method": "GET",
+       "evidence": ""
+      }
+     ]
+    },
+    {
+     "pluginid": "90003",
+     "alertRef": "90003",
+     "name": "Sub Resource Integrity Attribute Missing",
+     "riskcode": "2",
+     "confidence": "3",
+     "cweid": "345",
+     "solution": "<p>Provide a valid integrity attribute to the tag.</p>",
+     "count": "1",
+     "instances": [
+      {
+       "uri": "http://host.docker.internal:14501",
+       "method": "GET",
+       "evidence": "<script src=\"https://cdn.example.test/lib.js\"></script>"
+      }
+     ]
+    },
+    {
+     "pluginid": "10010",
+     "alertRef": "10010",
+     "name": "Cookie No HttpOnly Flag",
+     "riskcode": "1",
+     "confidence": "2",
+     "cweid": "1004",
+     "solution": "<p>Ensure that the HttpOnly flag is set for all cookies.</p>",
+     "count": "1",
+     "instances": [
+      {
+       "uri": "http://host.docker.internal:14501",
+       "method": "GET",
+       "evidence": "Set-Cookie: session"
+      }
+     ]
+    },
+    {
+     "pluginid": "10054",
+     "alertRef": "10054-1",
+     "name": "Cookie without SameSite Attribute",
+     "riskcode": "1",
+     "confidence": "2",
+     "cweid": "1275",
+     "solution": "<p>Ensure that the SameSite attribute is set to either 'lax' or ideally 'strict' for all cookies.</p>",
+     "count": "1",
+     "instances": [
+      {
+       "uri": "http://host.docker.internal:14501",
+       "method": "GET",
+       "evidence": "Set-Cookie: session"
+      }
+     ]
+    },
+    {
+     "pluginid": "10017",
+     "alertRef": "10017",
+     "name": "Cross-Domain JavaScript Source File Inclusion",
+     "riskcode": "1",
+     "confidence": "2",
+     "cweid": "829",
+     "solution": "<p>Ensure JavaScript source files are loaded from only trusted sources, and the sources can't be controlled by end users of the application.</p>",
+     "count": "1",
+     "instances": [
+      {
+       "uri": "http://host.docker.internal:14501",
+       "method": "GET",
+       "evidence": "<script src=\"https://cdn.example.test/lib.js\"></script>"
+      }
+     ]
+    },
+    {
+     "pluginid": "90004",
+     "alertRef": "90004-2",
+     "name": "Cross-Origin-Embedder-Policy Header Missing or Invalid",
+     "riskcode": "1",
+     "confidence": "2",
+     "cweid": "693",
+     "solution": "<p>Ensure that the application/web server sets the Cross-Origin-Embedder-Policy header appropriately, and that it sets the Cross-Origin-Embedder-Policy header to 'require-corp' for documents.</p><p>If possible, ensure that the end user uses a standards-compliant and modern web browser that supports the Cross-Origin-Embedder-Policy header (https://caniuse.com/mdn-http_headers_cross-origin-embedder-policy).</p>",
+     "count": "2",
+     "instances": [
+      {
+       "uri": "http://host.docker.internal:14501",
+       "method": "GET",
+       "evidence": ""
+      },
+      {
+       "uri": "http://host.docker.internal:14501/search?q=hello",
+       "method": "GET",
+       "evidence": ""
+      }
+     ]
+    },
+    {
+     "pluginid": "90004",
+     "alertRef": "90004-3",
+     "name": "Cross-Origin-Opener-Policy Header Missing or Invalid",
+     "riskcode": "1",
+     "confidence": "2",
+     "cweid": "693",
+     "solution": "<p>Ensure that the application/web server sets the Cross-Origin-Opener-Policy header appropriately, and that it sets the Cross-Origin-Opener-Policy header to 'same-origin' for documents.</p><p>'same-origin-allow-popups' is considered as less secured and should be avoided.</p><p>If possible, ensure that the end user uses a standards-compliant and modern web browser that supports the Cross-Origin-Opener-Policy header (https://caniuse.com/mdn-http_headers_cross-origin-opener-policy).</p>",
+     "count": "2",
+     "instances": [
+      {
+       "uri": "http://host.docker.internal:14501",
+       "method": "GET",
+       "evidence": ""
+      },
+      {
+       "uri": "http://host.docker.internal:14501/search?q=hello",
+       "method": "GET",
+       "evidence": ""
+      }
+     ]
+    },
+    {
+     "pluginid": "90004",
+     "alertRef": "90004-1",
+     "name": "Cross-Origin-Resource-Policy Header Missing or Invalid",
+     "riskcode": "1",
+     "confidence": "2",
+     "cweid": "693",
+     "solution": "<p>Ensure that the application/web server sets the Cross-Origin-Resource-Policy header appropriately, and that it sets the Cross-Origin-Resource-Policy header to 'same-origin' for all web pages.</p><p>'same-site' is considered as less secured and should be avoided.</p><p>If resources must be shared, set the header to 'cross-origin'.</p><p>If possible, ensure that the end user uses a standards-compliant and modern web browser that supports the Cross-Origin-Resource-Policy header (https://caniuse.com/mdn-http_headers_cross-origin-resource-policy).</p>",
+     "count": "3",
+     "instances": [
+      {
+       "uri": "http://host.docker.internal:14501",
+       "method": "GET",
+       "evidence": ""
+      },
+      {
+       "uri": "http://host.docker.internal:14501/admin",
+       "method": "GET",
+       "evidence": ""
+      },
+      {
+       "uri": "http://host.docker.internal:14501/search?q=hello",
+       "method": "GET",
+       "evidence": ""
+      }
+     ]
+    },
+    {
+     "pluginid": "10063",
+     "alertRef": "10063-1",
+     "name": "Permissions Policy Header Not Set",
+     "riskcode": "1",
+     "confidence": "2",
+     "cweid": "693",
+     "solution": "<p>Ensure that your web server, application server, load balancer, etc. is configured to set the Permissions-Policy header.</p>",
+     "count": "2",
+     "instances": [
+      {
+       "uri": "http://host.docker.internal:14501",
+       "method": "GET",
+       "evidence": ""
+      },
+      {
+       "uri": "http://host.docker.internal:14501/search?q=hello",
+       "method": "GET",
+       "evidence": ""
+      }
+     ]
+    },
+    {
+     "pluginid": "10037",
+     "alertRef": "10037",
+     "name": "Server Leaks Information via \"X-Powered-By\" HTTP Response Header Field(s)",
+     "riskcode": "1",
+     "confidence": "2",
+     "cweid": "497",
+     "solution": "<p>Ensure that your web server, application server, load balancer, etc. is configured to suppress \"X-Powered-By\" headers.</p>",
+     "count": "5",
+     "instances": [
+      {
+       "uri": "http://host.docker.internal:14501",
+       "method": "GET",
+       "evidence": "X-Powered-By: Express/3.0.1"
+      },
+      {
+       "uri": "http://host.docker.internal:14501/admin",
+       "method": "GET",
+       "evidence": "X-Powered-By: Express/3.0.1"
+      },
+      {
+       "uri": "http://host.docker.internal:14501/robots.txt",
+       "method": "GET",
+       "evidence": "X-Powered-By: Express/3.0.1"
+      },
+      {
+       "uri": "http://host.docker.internal:14501/search?q=hello",
+       "method": "GET",
+       "evidence": "X-Powered-By: Express/3.0.1"
+      },
+      {
+       "uri": "http://host.docker.internal:14501/sitemap.xml",
+       "method": "GET",
+       "evidence": "X-Powered-By: Express/3.0.1"
+      }
+     ]
+    },
+    {
+     "pluginid": "10036",
+     "alertRef": "10036-2",
+     "name": "Server Leaks Version Information via \"Server\" HTTP Response Header Field",
+     "riskcode": "1",
+     "confidence": "3",
+     "cweid": "497",
+     "solution": "<p>Ensure that your web server, application server, load balancer, etc. is configured to suppress the \"Server\" header or provide generic details.</p>",
+     "count": "5",
+     "instances": [
+      {
+       "uri": "http://host.docker.internal:14501/admin",
+       "method": "GET",
+       "evidence": "Apache/2.2.14 (Ubuntu)"
+      },
+      {
+       "uri": "http://host.docker.internal:14501/robots.txt",
+       "method": "GET",
+       "evidence": "Apache/2.2.14 (Ubuntu)"
+      },
+      {
+       "uri": "http://host.docker.internal:14501/search?q=hello",
+       "method": "GET",
+       "evidence": "Apache/2.2.14 (Ubuntu)"
+      },
+      {
+       "uri": "http://host.docker.internal:14501/sitemap.xml",
+       "method": "GET",
+       "evidence": "Apache/2.2.14 (Ubuntu)"
+      },
+      {
+       "uri": "http://host.docker.internal:14501/transfer",
+       "method": "POST",
+       "evidence": "Apache/2.2.14 (Ubuntu)"
+      }
+     ]
+    },
+    {
+     "pluginid": "10021",
+     "alertRef": "10021",
+     "name": "X-Content-Type-Options Header Missing",
+     "riskcode": "1",
+     "confidence": "2",
+     "cweid": "693",
+     "solution": "<p>Ensure that the application/web server sets the Content-Type header appropriately, and that it sets the X-Content-Type-Options header to 'nosniff' for all web pages.</p><p>If possible, ensure that the end user uses a standards-compliant and modern web browser that does not perform MIME-sniffing at all, or that can be directed by the web application/web server to not perform MIME-sniffing.</p>",
+     "count": "3",
+     "instances": [
+      {
+       "uri": "http://host.docker.internal:14501",
+       "method": "GET",
+       "evidence": ""
+      },
+      {
+       "uri": "http://host.docker.internal:14501/admin",
+       "method": "GET",
+       "evidence": ""
+      },
+      {
+       "uri": "http://host.docker.internal:14501/search?q=hello",
+       "method": "GET",
+       "evidence": ""
+      }
+     ]
+    },
+    {
+     "pluginid": "10019",
+     "alertRef": "10019-1",
+     "name": "Content-Type Header Missing",
+     "riskcode": "0",
+     "confidence": "2",
+     "cweid": "345",
+     "solution": "<p>Ensure each page is setting the specific and appropriate content-type value for the content being delivered.</p>",
+     "count": "4",
+     "instances": [
+      {
+       "uri": "http://host.docker.internal:14501/admin",
+       "method": "GET",
+       "evidence": ""
+      },
+      {
+       "uri": "http://host.docker.internal:14501/robots.txt",
+       "method": "GET",
+       "evidence": ""
+      },
+      {
+       "uri": "http://host.docker.internal:14501/sitemap.xml",
+       "method": "GET",
+       "evidence": ""
+      },
+      {
+       "uri": "http://host.docker.internal:14501/transfer",
+       "method": "POST",
+       "evidence": ""
+      }
+     ]
+    },
+    {
+     "pluginid": "10049",
+     "alertRef": "10049-3",
+     "name": "Storable and Cacheable Content",
+     "riskcode": "0",
+     "confidence": "2",
+     "cweid": "524",
+     "solution": "<p>Validate that the response does not contain sensitive, personal or user-specific information. If it does, consider the use of the following HTTP response headers, to limit, or prevent the content being stored and retrieved from the cache by another user:</p><p>Cache-Control: no-cache, no-store, must-revalidate, private</p><p>Pragma: no-cache</p><p>Expires: 0</p><p>This configuration directs both HTTP 1.0 and HTTP 1.1 compliant caching servers to not store the response, and to not retrieve the response (without validation) from the cache, in response to a similar request.</p>",
+     "count": "4",
+     "instances": [
+      {
+       "uri": "http://host.docker.internal:14501",
+       "method": "GET",
+       "evidence": ""
+      },
+      {
+       "uri": "http://host.docker.internal:14501/robots.txt",
+       "method": "GET",
+       "evidence": ""
+      },
+      {
+       "uri": "http://host.docker.internal:14501/sitemap.xml",
+       "method": "GET",
+       "evidence": ""
+      },
+      {
+       "uri": "http://host.docker.internal:14501/transfer",
+       "method": "POST",
+       "evidence": ""
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}
