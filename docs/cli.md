@@ -142,3 +142,26 @@ so nothing global changes:
 | Cursor | to be confirmed at implementation time |
 
 Paths are checked against each assistant's official docs when `init` is written, not taken from this table.
+
+## GitHub Action
+
+Run the same check on every push. Save this as `.github/workflows/audit.yml`:
+
+```yaml
+name: security check
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0   # gitleaks reads git history
+      - uses: surapas3022/ai-secure-audit@v0
+        with:
+          fail-on: high
+```
+
+Inputs: `path` (default `.`), `fail-on` (`critical`, `high`, `medium`, `low`; default `high`), `version` (npm version of this tool; default is pinned to the release the tag points to). The job fails when a finding is at or above `fail-on`. The report is uploaded as the `ai-secure-audit-report` artifact. Tested on a GitHub-hosted Linux runner only.

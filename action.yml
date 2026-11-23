@@ -1,0 +1,35 @@
+name: ai-secure-audit
+description: Free security check for apps built with AI. Runs pinned open-source scanners and fails the job on findings at or above a level.
+branding:
+  icon: shield
+  color: green
+inputs:
+  path:
+    description: Folder to check, relative to the repo root.
+    default: "."
+  fail-on:
+    description: "Fail the job if a finding is at or above this level: critical, high, medium, low."
+    default: high
+  version:
+    description: ai-secure-audit version from npm. Pin it so results do not change under you.
+    default: "0.0.11"
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v7
+      with:
+        node-version: "20"
+    - name: Run ai-secure-audit
+      shell: bash
+      env:
+        AUDIT_PATH: ${{ inputs.path }}
+        AUDIT_FAIL_ON: ${{ inputs.fail-on }}
+        AUDIT_VERSION: ${{ inputs.version }}
+      run: npx --yes "ai-secure-audit@${AUDIT_VERSION}" scan "${AUDIT_PATH}" --fail-on "${AUDIT_FAIL_ON}"
+    - name: Upload report
+      if: always()
+      uses: actions/upload-artifact@v7
+      with:
+        name: ai-secure-audit-report
+        path: ${{ inputs.path }}/.audit/out/
+        if-no-files-found: ignore
