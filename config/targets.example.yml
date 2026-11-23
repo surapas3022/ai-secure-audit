@@ -1,20 +1,8 @@
-# Copy to <project>/.audit/targets.yml and edit.
-# Hosts not listed here are never contacted. Listing a host means you own it or have written permission to test it.
-#
-# env decides what may run:
-#   local / dev / staging  passive and active checks
-#   prod                   passive checks only (TLS check, slow port scan of your own IP, ZAP baseline, ZAP API scan -S)
-
+# targets.yml: the hosts you own or have permission to test.
+# `ai-secure-audit live` refuses any host that is not listed here. Keep this file out of git (add it to .gitignore).
 targets:
-  - name: api-local
-    env: local
-    url: http://127.0.0.1:3000
-
-  - name: web-prod
+  - host: dev.example.com
+    env: dev          # dev (default) or prod. prod also needs --allow-prod on the command line.
+  - host: www.example.com
+    port: 443         # optional, default 443
     env: prod
-    url: https://example.com
-    ip: 192.0.2.10          # your own server only, never a CDN or a third party
-    window: "Mon-Fri 20:00-23:00 Asia/Bangkok"
-
-exclude:                    # never contacted, even if a URL above links to them
-  - https://payment-gateway.example.net

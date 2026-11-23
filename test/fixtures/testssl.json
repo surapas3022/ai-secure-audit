@@ -1,0 +1,532 @@
+[
+ {
+  "id": "engine_problem",
+  "severity": "WARN",
+  "finding": "No engine or GOST support via engine with your /opt/homebrew/bin/openssl"
+ },
+ {
+  "id": "cmdline_fast_depreciation",
+  "severity": "WARN",
+  "finding": "'--fast' can have some undesired side effects thus it is not recommended to use anymore"
+ },
+ {
+  "id": "service",
+  "severity": "INFO",
+  "finding": "HTTP"
+ },
+ {
+  "id": "pre_128cipher",
+  "severity": "INFO",
+  "finding": "No 128 cipher limit bug"
+ },
+ {
+  "id": "SSLv2",
+  "severity": "OK",
+  "finding": "not offered"
+ },
+ {
+  "id": "SSLv3",
+  "severity": "OK",
+  "finding": "not offered"
+ },
+ {
+  "id": "TLS1",
+  "severity": "INFO",
+  "finding": "not offered"
+ },
+ {
+  "id": "TLS1_1",
+  "severity": "INFO",
+  "finding": "not offered"
+ },
+ {
+  "id": "TLS1_2",
+  "severity": "OK",
+  "finding": "offered"
+ },
+ {
+  "id": "TLS1_3",
+  "severity": "OK",
+  "finding": "offered with final"
+ },
+ {
+  "id": "ALPN",
+  "severity": "INFO",
+  "finding": "not offered"
+ },
+ {
+  "id": "cipherlist_NULL",
+  "severity": "OK",
+  "finding": "not offered"
+ },
+ {
+  "id": "cipherlist_aNULL",
+  "severity": "OK",
+  "finding": "not offered"
+ },
+ {
+  "id": "cipherlist_EXPORT",
+  "severity": "OK",
+  "finding": "not offered"
+ },
+ {
+  "id": "cipherlist_LOW",
+  "severity": "OK",
+  "finding": "not offered"
+ },
+ {
+  "id": "cipherlist_3DES_IDEA",
+  "severity": "INFO",
+  "finding": "not offered"
+ },
+ {
+  "id": "cipherlist_OBSOLETED",
+  "severity": "LOW",
+  "finding": "offered"
+ },
+ {
+  "id": "cipherlist_STRONG_NOFS",
+  "severity": "OK",
+  "finding": "offered"
+ },
+ {
+  "id": "cipherlist_STRONG_FS",
+  "severity": "OK",
+  "finding": "offered"
+ },
+ {
+  "id": "cipher_order-tls1_2",
+  "severity": "INFO",
+  "finding": "NOT a cipher order configured"
+ },
+ {
+  "id": "cipher_order-tls1_3",
+  "severity": "INFO",
+  "finding": "NOT a cipher order configured"
+ },
+ {
+  "id": "cipher_order",
+  "severity": "INFO",
+  "finding": "NOT a server cipher order configured"
+ },
+ {
+  "id": "FS",
+  "severity": "OK",
+  "finding": "offered"
+ },
+ {
+  "id": "FS_ciphers",
+  "severity": "INFO",
+  "finding": "TLS_AES_128_GCM_SHA256 TLS_AES_256_GCM_SHA384 TLS_CHACHA20_POLY1305_SHA256 DHE-RSA-AES128-GCM-SHA256 DHE-RSA-AES128-SHA2"
+ },
+ {
+  "id": "FS_KEMs",
+  "severity": "OK",
+  "finding": "SecP256r1MLKEM768 X25519MLKEM768"
+ },
+ {
+  "id": "FS_ECDHE_curves",
+  "severity": "OK",
+  "finding": "prime256v1 secp384r1 secp521r1 X25519 X448"
+ },
+ {
+  "id": "TLS_extensions",
+  "severity": "INFO",
+  "finding": "'max fragment length/#1' 'EC point formats/#11' 'encrypt-then-mac/#22' 'extended master secret/#23' 'session ticket/#35'"
+ },
+ {
+  "id": "TLS_session_ticket",
+  "severity": "INFO",
+  "finding": "valid for 7200 seconds only (<daily)"
+ },
+ {
+  "id": "SSL_sessionID_support",
+  "severity": "INFO",
+  "finding": "yes"
+ },
+ {
+  "id": "sessionresumption_ticket",
+  "severity": "INFO",
+  "finding": "supported"
+ },
+ {
+  "id": "sessionresumption_ID",
+  "severity": "INFO",
+  "finding": "supported"
+ },
+ {
+  "id": "TLS_timestamp",
+  "severity": "INFO",
+  "finding": "random"
+ },
+ {
+  "id": "certificate_compression",
+  "severity": "INFO",
+  "finding": "none"
+ },
+ {
+  "id": "clientAuth",
+  "severity": "INFO",
+  "finding": "none"
+ },
+ {
+  "id": "cert_numbers",
+  "severity": "INFO",
+  "finding": "1"
+ },
+ {
+  "id": "cert_signatureAlgorithm",
+  "severity": "OK",
+  "finding": "SHA256 with RSA"
+ },
+ {
+  "id": "cert_keySize",
+  "severity": "INFO",
+  "finding": "RSA 2048 bits (exponent is 65537)"
+ },
+ {
+  "id": "cert_keyUsage",
+  "severity": "INFO",
+  "finding": "No server key usage information"
+ },
+ {
+  "id": "cert_extKeyUsage",
+  "severity": "INFO",
+  "finding": "No server extended key usage information"
+ },
+ {
+  "id": "cert_serialNumber",
+  "severity": "INFO",
+  "finding": "4375AEF2FF9875CA65FEA5D7772328D302FB2915"
+ },
+ {
+  "id": "cert_serialNumberLen",
+  "severity": "INFO",
+  "finding": "20"
+ },
+ {
+  "id": "cert_fingerprintSHA1",
+  "severity": "INFO",
+  "finding": "4078588FF03CDD35FE93AA5516DE41B8CB493AE5"
+ },
+ {
+  "id": "cert_fingerprintSHA256",
+  "severity": "INFO",
+  "finding": "65FDCEACD0ED65094FCD6557880968ADA2BD82FB592B370D39368D5A74548F85"
+ },
+ {
+  "id": "cert_commonName",
+  "severity": "OK",
+  "finding": "localhost"
+ },
+ {
+  "id": "cert_commonName_wo_SNI",
+  "severity": "INFO",
+  "finding": "localhost"
+ },
+ {
+  "id": "cert_subjectAltName",
+  "severity": "HIGH",
+  "finding": "No SAN, browsers are complaining"
+ },
+ {
+  "id": "cert_trust",
+  "severity": "HIGH",
+  "finding": "via CN only (same w/o SNI)"
+ },
+ {
+  "id": "cert_chain_of_trust",
+  "severity": "CRITICAL",
+  "finding": "failed (self signed)."
+ },
+ {
+  "id": "cert_certificatePolicies_EV",
+  "severity": "INFO",
+  "finding": "no"
+ },
+ {
+  "id": "cert_expirationStatus",
+  "severity": "OK",
+  "finding": "short-lived cert (2 days)"
+ },
+ {
+  "id": "cert_notBefore",
+  "severity": "INFO",
+  "finding": "2026-11-23 06:03"
+ },
+ {
+  "id": "cert_notAfter",
+  "severity": "OK",
+  "finding": "2026-11-25 06:03"
+ },
+ {
+  "id": "cert_extlifeSpan",
+  "severity": "OK",
+  "finding": "certificate has no extended life time according to browser forum"
+ },
+ {
+  "id": "cert_eTLS",
+  "severity": "INFO",
+  "finding": "not present"
+ },
+ {
+  "id": "cert_crlDistributionPoints",
+  "severity": "INFO",
+  "finding": "--"
+ },
+ {
+  "id": "cert_ocspURL",
+  "severity": "INFO",
+  "finding": "--"
+ },
+ {
+  "id": "cert_revocation",
+  "severity": "HIGH",
+  "finding": "Neither CRL nor OCSP URI provided"
+ },
+ {
+  "id": "OCSP_stapling",
+  "severity": "INFO",
+  "finding": "not offered"
+ },
+ {
+  "id": "cert_mustStapleExtension",
+  "severity": "INFO",
+  "finding": "--"
+ },
+ {
+  "id": "DNS_CAArecord",
+  "severity": "LOW",
+  "finding": "--"
+ },
+ {
+  "id": "certificate_transparency",
+  "severity": "INFO",
+  "finding": "--"
+ },
+ {
+  "id": "certs_countServer",
+  "severity": "INFO",
+  "finding": "1"
+ },
+ {
+  "id": "certs_list_ordering_problem",
+  "severity": "INFO",
+  "finding": "no"
+ },
+ {
+  "id": "cert_caIssuers",
+  "severity": "INFO",
+  "finding": "localhost"
+ },
+ {
+  "id": "intermediate_cert_badOCSP",
+  "severity": "OK",
+  "finding": "intermediate certificate(s) is/are ok"
+ },
+ {
+  "id": "HTTP_status_code",
+  "severity": "INFO",
+  "finding": "200 ok ('/')"
+ },
+ {
+  "id": "HTTP_clock_skew",
+  "severity": "INFO",
+  "finding": "Got no HTTP time, maybe try different URL?"
+ },
+ {
+  "id": "HSTS",
+  "severity": "LOW",
+  "finding": "not offered"
+ },
+ {
+  "id": "HPKP",
+  "severity": "INFO",
+  "finding": "No support for HTTP Public Key Pinning"
+ },
+ {
+  "id": "banner_server",
+  "severity": "INFO",
+  "finding": "No Server banner line in header, interesting!"
+ },
+ {
+  "id": "banner_application",
+  "severity": "INFO",
+  "finding": "No application banner found"
+ },
+ {
+  "id": "cookie_count",
+  "severity": "INFO",
+  "finding": "0 at '/'"
+ },
+ {
+  "id": "security_headers",
+  "severity": "MEDIUM",
+  "finding": "--"
+ },
+ {
+  "id": "banner_reverseproxy",
+  "severity": "INFO",
+  "finding": "--"
+ },
+ {
+  "id": "heartbleed",
+  "severity": "OK",
+  "finding": "not vulnerable, no heartbeat extension"
+ },
+ {
+  "id": "CCS",
+  "severity": "OK",
+  "finding": "not vulnerable"
+ },
+ {
+  "id": "ticketbleed",
+  "severity": "OK",
+  "finding": "not vulnerable"
+ },
+ {
+  "id": "ROBOT",
+  "severity": "OK",
+  "finding": "not vulnerable"
+ },
+ {
+  "id": "secure_renego",
+  "severity": "OK",
+  "finding": "supported"
+ },
+ {
+  "id": "secure_client_renego",
+  "severity": "OK",
+  "finding": "not vulnerable"
+ },
+ {
+  "id": "CRIME_TLS",
+  "severity": "OK",
+  "finding": "not vulnerable"
+ },
+ {
+  "id": "BREACH",
+  "severity": "OK",
+  "finding": "not vulnerable, no gzip/deflate/compress/br HTTP compression  - only supplied '/' tested"
+ },
+ {
+  "id": "POODLE_SSL",
+  "severity": "OK",
+  "finding": "not vulnerable, no SSLv3"
+ },
+ {
+  "id": "fallback_SCSV",
+  "severity": "OK",
+  "finding": "no protocol below TLS 1.2 offered"
+ },
+ {
+  "id": "SWEET32",
+  "severity": "OK",
+  "finding": "not vulnerable"
+ },
+ {
+  "id": "FREAK",
+  "severity": "OK",
+  "finding": "not vulnerable"
+ },
+ {
+  "id": "DROWN",
+  "severity": "OK",
+  "finding": "not vulnerable on this host and port"
+ },
+ {
+  "id": "DROWN_hint",
+  "severity": "INFO",
+  "finding": "Make sure you don't use this certificate elsewhere with SSLv2 enabled services, see https://search.censys.io/search?reso"
+ },
+ {
+  "id": "LOGJAM-common_primes",
+  "severity": "INFO",
+  "finding": "RFC3526/Oakley Group 14"
+ },
+ {
+  "id": "LOGJAM",
+  "severity": "OK",
+  "finding": "not vulnerable, no DH EXPORT ciphers,"
+ },
+ {
+  "id": "BEAST",
+  "severity": "OK",
+  "finding": "not vulnerable, no SSL3 or TLS1"
+ },
+ {
+  "id": "LUCKY13",
+  "severity": "LOW",
+  "finding": "potentially vulnerable, uses obsolete TLS CBC ciphers"
+ },
+ {
+  "id": "winshock",
+  "severity": "OK",
+  "finding": "not vulnerable"
+ },
+ {
+  "id": "RC4",
+  "severity": "WARN",
+  "finding": "RC4 ciphers not supported by local OpenSSL (/opt/homebrew/bin/openssl)"
+ },
+ {
+  "id": "rating_spec",
+  "severity": "INFO",
+  "finding": "SSL Labs's 'SSL Server Rating Guide' (version 2009r from 2025-05-16)"
+ },
+ {
+  "id": "rating_doc",
+  "severity": "INFO",
+  "finding": "https://github.com/ssllabs/research/wiki/SSL-Server-Rating-Guide"
+ },
+ {
+  "id": "protocol_support_score",
+  "severity": "INFO",
+  "finding": "0"
+ },
+ {
+  "id": "protocol_support_score_weighted",
+  "severity": "INFO",
+  "finding": "0"
+ },
+ {
+  "id": "key_exchange_score",
+  "severity": "INFO",
+  "finding": "0"
+ },
+ {
+  "id": "key_exchange_score_weighted",
+  "severity": "INFO",
+  "finding": "0"
+ },
+ {
+  "id": "cipher_strength_score",
+  "severity": "INFO",
+  "finding": "0"
+ },
+ {
+  "id": "cipher_strength_score_weighted",
+  "severity": "INFO",
+  "finding": "0"
+ },
+ {
+  "id": "final_score",
+  "severity": "INFO",
+  "finding": "0"
+ },
+ {
+  "id": "overall_grade",
+  "severity": "CRITICAL",
+  "finding": "T"
+ },
+ {
+  "id": "grade_cap_reason_1",
+  "severity": "INFO",
+  "finding": "Grade capped to T. Issues with chain of trust (self signed)"
+ },
+ {
+  "id": "scanTime",
+  "severity": "INFO",
+  "finding": "137"
+ }
+]

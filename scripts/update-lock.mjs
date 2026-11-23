@@ -3,6 +3,8 @@
 import { writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { get } from '../src/http.js';
+import { treeFromTarGz } from '../src/extract.js';
+import { treeHash } from '../src/tools.js';
 
 // *-musl = Linux without glibc (Alpine). Static Go tools use the same file as glibc Linux.
 const PLATFORMS = ['darwin-arm64', 'darwin-x64', 'linux-arm64', 'linux-x64', 'linux-arm64-musl', 'linux-x64-musl', 'win32-arm64', 'win32-x64'];
@@ -92,6 +94,18 @@ for (const [id, t] of Object.entries(TOOLS)) {
     platforms[p] = { url: `${base}/${name}`, sha256, archive: archiveKind(name), binary };
   }
   lock.tools[id] = { version: t.version, license: t.license, repo: `https://github.com/${t.repo}`, platforms };
+}
+
+// Tools for checking a live host. They ship as a source folder, so the pin is a hash of the folder content.
+// No Windows build (needs bash) and no Alpine build (no bash by default): the report says so instead of passing.
+const LIVE_TOOLS = {
+  testssl: { repo: 'testssl/testssl.sh', version: '3.2.5', license: 'GPL-2.0', entry: 'testssl.sh', platforms: ['darwin-arm64', 'darwin-x64', 'linux-arm64', 'linux-x64'] },
+};
+lock.live_tools = {};
+for (const [id, t] of Object.entries(LIVE_TOOLS)) {
+  const url = `https://github.com/${t.repo}/archive/refs/tags/v${t.version}.tar.gz`;
+  const tree_sha256 = treeHash(treeFromTarGz(await get(url), 1));
+  lock.live_tools[id] = { version: t.version, license: t.license, repo: `https://github.com/${t.repo}`, entry: t.entry, url, tree_sha256, platforms: t.platforms };
 }
 
 const out = fileURLToPath(new URL('../tools.lock.json', import.meta.url));

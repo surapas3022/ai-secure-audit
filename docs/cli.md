@@ -165,3 +165,21 @@ jobs:
 ```
 
 Inputs: `path` (default `.`), `fail-on` (`critical`, `high`, `medium`, `low`; default `high`), `version` (npm version of this tool; default is pinned to the release the tag points to). The job fails when a finding is at or above `fail-on`. The report is uploaded as the `ai-secure-audit-report` artifact. Tested on a GitHub-hosted Linux runner only.
+
+## live: check the TLS of one host
+
+```bash
+cp config/targets.example.yml targets.yml    # list only hosts you own or may test; keep this file out of git
+npx ai-secure-audit live dev.example.com
+```
+
+`live` talks to a real server, so it is a separate command from `scan` and it is strict:
+
+- It checks **one** host and port at a time, and only if it is in `targets.yml`. Anything else is refused before any connection is made: a host that is not listed, a sub-domain or parent of a listed host, a URL, a path, a wildcard, an address range. A line in `targets.yml` that cannot be read is an error, never skipped.
+- A host marked `env: prod` also needs `--allow-prod`, every time. Add it only when the owner has said to check production.
+- It uses [testssl.sh](https://github.com/testssl/testssl.sh) (GPL-2.0), pinned by a hash of the whole folder (`live_tools` in `tools.lock.json`). It needs `bash` and `openssl`, and takes about 2 minutes per host. There is no build for Windows (use WSL) or Alpine (no bash by default): the report then says the check did not run, and the exit code is 2.
+- Results go to `.audit/out/live/<host>-<port>/` (`report.md`, `findings.json`, the raw `testssl.json`).
+
+What becomes a finding: old SSL/TLS versions that are offered, weak cipher groups, an untrusted, mismatched, expired or weakly signed certificate, missing HSTS, and known TLS weaknesses (Heartbleed, ROBOT, POODLE and similar). testssl lists about 170 lines for one host; the rest stay in the raw file. A test testssl could not run (for example RC4 when the local OpenSSL has none) is listed under "Tests that could not run", never shown as a pass.
+
+Not checked: the app itself, HTTP security headers other than HSTS, cookies, other hosts and ports.

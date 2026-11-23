@@ -2,6 +2,7 @@ import { copyFileSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { scan, outDir } from './scan.js';
 import { reportMarkdown, consoleSummary } from './report.js';
+import { live, liveSummary } from './live.js';
 import { reportSimple } from './report-simple.js';
 import { atOrAbove, SEVERITY_ORDER } from './findings.js';
 import { cacheDir, lockedTools, platformKey } from './tools.js';
@@ -15,6 +16,7 @@ Usage: npx ai-secure-audit [command] [path] [options]
 Commands
   scan [path]     basic check of a project folder (default command, default path ".")
   retest [path]   run the check again and compare with the last result
+  live <host>     check the TLS of one host from your targets file (about 2 minutes; see docs/cli.md)
   tools           list pinned tool versions, licenses and the cache folder
   init            install the AI skills into this project (not available yet)
   mcp             run as an MCP server (not available yet)
@@ -22,6 +24,8 @@ Commands
 Options
   --json               print findings.json to stdout instead of the summary
   --report simple      also write report-simple.md: a short to-do list in plain words
+  --targets <file>     for live: the list of hosts you may check (default: targets.yml)
+  --allow-prod         for live: also allow hosts marked prod in the targets file
   --fail-on <level>    exit 1 if a finding is at or above: ${SEVERITY_ORDER.slice(0, 4).join(', ')}
   --advanced           add the Docker-based advanced tools (not available yet)
   -h, --help           show this help
@@ -30,12 +34,14 @@ Options
 Results are written to <path>/.audit/out/ (git-ignored automatically).`;
 
 function parseArgs(argv) {
-  const opts = { command: 'scan', path: '.', json: false, failOn: null, advanced: false, report: null };
+  const opts = { command: 'scan', path: '.', json: false, failOn: null, advanced: false, report: null, targets: 'targets.yml', allowProd: false };
   const rest = [];
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--json') opts.json = true;
     else if (a === '--advanced') opts.advanced = true;
+    else if (a === '--allow-prod') opts.allowProd = true;
+    else if (a === '--targets') opts.targets = argv[++i];
     else if (a === '--report') opts.report = argv[++i];
     else if (a.startsWith('--report=')) opts.report = a.slice(9);
     else if (a === '--fail-on') opts.failOn = argv[++i];
@@ -45,7 +51,7 @@ function parseArgs(argv) {
     else if (a.startsWith('-')) throw new Error(`unknown option: ${a}`);
     else rest.push(a);
   }
-  if (opts.command === 'scan' && ['scan', 'retest', 'tools', 'init', 'mcp', 'help'].includes(rest[0])) opts.command = rest.shift();
+  if (opts.command === 'scan' && ['scan', 'retest', 'live', 'tools', 'init', 'mcp', 'help'].includes(rest[0])) opts.command = rest.shift();
   if (rest[0]) opts.path = rest[0];
   if (opts.report && opts.report !== 'simple') throw new Error('--report must be: simple');
   if (opts.failOn && !SEVERITY_ORDER.slice(0, 4).includes(opts.failOn)) throw new Error(`--fail-on must be one of ${SEVERITY_ORDER.slice(0, 4).join(', ')}`);
@@ -115,6 +121,15 @@ export async function main(argv) {
         for (const [id, t] of Object.entries(lockedTools())) process.stdout.write(`${id.padEnd(12)} ${t.version.padEnd(8)} ${t.license.padEnd(11)} ${t.repo}\n`);
         process.stdout.write(`\nplatform: ${platformKey()}\ncache:    ${cacheDir()}\n`);
         return 0;
+      }
+      case 'live': {
+        if (opts.path === '.') throw new Error('live needs a host: npx ai-secure-audit live <host[:port]>');
+        const log = opts.json ? () => {} : (m) => process.stderr.write(`${m}\n`);
+        const { out, result } = await live(opts.path, { targetsFile: opts.targets, allowProd: opts.allowProd, log, version: pkg.version });
+        const r = relative(process.cwd(), out).split('\\').join('/');
+        process.stdout.write(opts.json ? JSON.stringify(result, null, 2) + '\n' : liveSummary(result, r) + '\n');
+        if (result.tools.some((t) => t.status !== 'ok')) return 2;
+        return opts.failOn && atOrAbove(result.findings, opts.failOn).length ? 1 : 0;
       }
       case 'init':
       case 'mcp':

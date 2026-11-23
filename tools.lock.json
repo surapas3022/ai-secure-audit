@@ -111,61 +111,6 @@
         }
       }
     },
-    "opengrep": {
-      "version": "1.33.1",
-      "license": "LGPL-2.1",
-      "repo": "https://github.com/opengrep/opengrep",
-      "platforms": {
-        "darwin-arm64": {
-          "url": "https://github.com/opengrep/opengrep/releases/download/v1.33.1/opengrep_osx_arm64",
-          "sha256": "a17c1881bb40e3214266a7a291cf4f2ae3bc56c1715628b5712d2ec816bc3e2d",
-          "archive": "raw",
-          "binary": "opengrep_osx_arm64"
-        },
-        "darwin-x64": {
-          "url": "https://github.com/opengrep/opengrep/releases/download/v1.33.1/opengrep_osx_x86",
-          "sha256": "c3bd18e0d898d44e28419d95dad57c8928bb46ab32889a0ee1f72a87ad9627af",
-          "archive": "raw",
-          "binary": "opengrep_osx_x86"
-        },
-        "linux-arm64": {
-          "url": "https://github.com/opengrep/opengrep/releases/download/v1.33.1/opengrep_manylinux_aarch64",
-          "sha256": "d1433f63a90b8bc0b6ad4b498a13b372b856ce9a754a43484ba4920fe2d76dcf",
-          "archive": "raw",
-          "binary": "opengrep_manylinux_aarch64"
-        },
-        "linux-x64": {
-          "url": "https://github.com/opengrep/opengrep/releases/download/v1.33.1/opengrep_manylinux_x86",
-          "sha256": "46e8133cc490f9f50518061590ce2f6be5a08afaeda034471c0ceda4b3899808",
-          "archive": "raw",
-          "binary": "opengrep_manylinux_x86"
-        },
-        "linux-arm64-musl": {
-          "url": "https://github.com/opengrep/opengrep/releases/download/v1.33.1/opengrep_musllinux_aarch64",
-          "sha256": "17c6917b53d8f8af794d8effb13c1a068018c602435d33fefc105aaa23d96f4b",
-          "archive": "raw",
-          "binary": "opengrep_musllinux_aarch64"
-        },
-        "linux-x64-musl": {
-          "url": "https://github.com/opengrep/opengrep/releases/download/v1.33.1/opengrep_musllinux_x86",
-          "sha256": "aa03c3bfff105dc122cbbe6e239dc39a5cae486f1837bba3af7a16bca173f8d6",
-          "archive": "raw",
-          "binary": "opengrep_musllinux_x86"
-        },
-        "win32-arm64": {
-          "url": "https://github.com/opengrep/opengrep/releases/download/v1.33.1/opengrep_windows_x86.exe",
-          "sha256": "132e606e071bdd3928286fddc893198a6106a90820d46e21197e0ace1a23e0c1",
-          "archive": "raw",
-          "binary": "opengrep_windows_x86.exe"
-        },
-        "win32-x64": {
-          "url": "https://github.com/opengrep/opengrep/releases/download/v1.33.1/opengrep_windows_x86.exe",
-          "sha256": "132e606e071bdd3928286fddc893198a6106a90820d46e21197e0ace1a23e0c1",
-          "archive": "raw",
-          "binary": "opengrep_windows_x86.exe"
-        }
-      }
-    },
     "trivy": {
       "version": "0.76.1",
       "license": "Apache-2.0",
@@ -220,6 +165,77 @@
           "binary": "trivy.exe"
         }
       }
+    },
+    "opengrep": {
+      "version": "1.33.1",
+      "license": "LGPL-2.1",
+      "repo": "https://github.com/opengrep/opengrep",
+      "platforms": {
+        "darwin-arm64": {
+          "url": "https://github.com/opengrep/opengrep/releases/download/v1.33.1/opengrep_osx_arm64",
+          "sha256": "a17c1881bb40e3214266a7a291cf4f2ae3bc56c1715628b5712d2ec816bc3e2d",
+          "archive": "raw",
+          "binary": "opengrep_osx_arm64"
+        },
+        "darwin-x64": {
+          "url": "https://github.com/opengrep/opengrep/releases/download/v1.33.1/opengrep_osx_x86",
+          "sha256": "c3bd18e0d898d44e28419d95dad57c8928bb46ab32889a0ee1f72a87ad9627af",
+          "archive": "raw",
+          "binary": "opengrep_osx_x86"
+        },
+        "linux-arm64": {
+          "url": "https://github.com/opengrep/opengrep/releases/download/v1.33.1/opengrep_manylinux_aarch64",
+          "sha256": "d1433f63a90b8bc0b6ad4b498a13b372b856ce9a754a43484ba4920fe2d76dcf",
+          "archive": "raw",
+          "binary": "opengrep_manylinux_aarch64"
+        },
+        "linux-x64": {
+          "url": "https://github.com/opengrep/opengrep/releases/download/v1.33.1/opengrep_manylinux_x86",
+          "sha256": "46e8133cc490f9f50518061590ce2f6be5a08afaeda034471c0ceda4b3899808",
+          "archive": "raw",
+          "binary": "opengrep_manylinux_x86"
+        },
+        "linux-arm64-musl": {
+          "url": "https://github.com/opengrep/opengrep/releases/download/v1.33.1/opengrep_musllinux_aarch64",
+          "sha256": "17c6917b53d8f8af794d8effb13c1a068018c602435d33fefc105aaa23d96f4b",
+          "archive": "raw",
+          "binary": "opengrep_musllinux_aarch64"
+        },
+        "linux-x64-musl": {
+          "url": "https://github.com/opengrep/opengrep/releases/download/v1.33.1/opengrep_musllinux_x86",
+          "sha256": "aa03c3bfff105dc122cbbe6e239dc39a5cae486f1837bba3af7a16bca173f8d6",
+          "archive": "raw",
+          "binary": "opengrep_musllinux_x86"
+        },
+        "win32-arm64": {
+          "url": "https://github.com/opengrep/opengrep/releases/download/v1.33.1/opengrep_windows_x86.exe",
+          "sha256": "132e606e071bdd3928286fddc893198a6106a90820d46e21197e0ace1a23e0c1",
+          "archive": "raw",
+          "binary": "opengrep_windows_x86.exe"
+        },
+        "win32-x64": {
+          "url": "https://github.com/opengrep/opengrep/releases/download/v1.33.1/opengrep_windows_x86.exe",
+          "sha256": "132e606e071bdd3928286fddc893198a6106a90820d46e21197e0ace1a23e0c1",
+          "archive": "raw",
+          "binary": "opengrep_windows_x86.exe"
+        }
+      }
+    }
+  },
+  "live_tools": {
+    "testssl": {
+      "version": "3.2.5",
+      "license": "GPL-2.0",
+      "repo": "https://github.com/testssl/testssl.sh",
+      "entry": "testssl.sh",
+      "url": "https://github.com/testssl/testssl.sh/archive/refs/tags/v3.2.5.tar.gz",
+      "tree_sha256": "acd99ec1375601207940682bbd595c18ef9299295ad6dfc74c59d1e7d297c6ee",
+      "platforms": [
+        "darwin-arm64",
+        "darwin-x64",
+        "linux-arm64",
+        "linux-x64"
+      ]
     }
   }
 }

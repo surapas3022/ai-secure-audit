@@ -51,3 +51,34 @@ export function fromZip(buf, name) {
   }
   throw new Error(`${name} not found in archive`);
 }
+
+// Whole-folder reader for tools that ship as a folder (testssl.sh). Returns [{ path, mode, data }] in memory, so the
+// content can be checked against the pinned hash before anything is written to disk.
+// Only plain files and folders are accepted; an entry that would land outside the target is an error.
+export function treeFromTarGz(buf, strip = 1) {
+  const tar = gunzipSync(buf);
+  const files = [];
+  let longName = null;
+  for (let off = 0; off + 512 <= tar.length; ) {
+    const header = tar.subarray(off, off + 512);
+    if (header.every((b) => b === 0)) break;
+    const field = (start, len) => header.subarray(start, start + len).toString('utf8').replace(/\0.*$/s, '');
+    const size = parseInt(field(124, 12).trim() || '0', 8);
+    const type = field(156, 1);
+    const data = tar.subarray(off + 512, off + 512 + size);
+    const rawPath = longName ?? (field(345, 155) ? `${field(345, 155)}/${field(0, 100)}` : field(0, 100));
+    longName = null;
+    if (type === 'L') longName = data.toString('utf8').replace(/\0.*$/s, '');
+    else if (type === '0' || type === '') {
+      const parts = rawPath.split('/').filter(Boolean).slice(strip);
+      if (parts.some((p) => p === '..' || p === '.') || rawPath.startsWith('/') || rawPath.includes('\\')) {
+        throw new Error(`unsafe path in archive: ${rawPath}`);
+      }
+      if (parts.length) files.push({ path: parts.join('/'), mode: parseInt(field(100, 8).trim() || '644', 8) & 0o777, data: Buffer.from(data) });
+    } else if (!['5', 'g', 'x'].includes(type)) {
+      throw new Error(`unsupported entry type "${type}" in archive: ${rawPath}`);
+    }
+    off += 512 + Math.ceil(size / 512) * 512;
+  }
+  return files;
+}

@@ -1,9 +1,9 @@
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync, chmodSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync, chmodSync, rmSync } from 'node:fs';
 import { homedir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { get } from './http.js';
-import { fromTarGz, fromZip } from './extract.js';
+import { fromTarGz, fromZip, treeFromTarGz } from './extract.js';
 
 const lock = JSON.parse(readFileSync(new URL('../tools.lock.json', import.meta.url), 'utf8'));
 
@@ -53,4 +53,51 @@ export async function ensureTool(id, log = () => {}) {
   if (process.platform !== 'win32') chmodSync(tmp, 0o755);
   renameSync(tmp, target);
   return target;
+}
+
+// Hash of a folder's content that does not depend on how the archive was compressed (GitHub does not promise that
+// a source archive keeps the same bytes): path, mode and content of every file, in path order.
+export function treeHash(files) {
+  const h = createHash('sha256');
+  for (const f of [...files].sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0))) {
+    h.update(`${f.path}\0${f.mode & 0o111 ? 'x' : '-'}\0${f.data.length}\0`);
+    h.update(f.data);
+  }
+  return h.digest('hex');
+}
+
+export function liveTools() {
+  return lock.live_tools ?? {};
+}
+
+// Tools for checking a live host. They ship as a folder, so the pin is a content hash of the whole folder.
+// Returns the path to the entry script, downloading and verifying it on first use.
+export async function ensureFolderTool(id, log = () => {}) {
+  const tool = liveTools()[id];
+  if (!tool) throw new Error(`unknown tool: ${id}`);
+  if (!tool.platforms.includes(platformKey())) throw new Error(`${id} has no build for ${platformKey()}`);
+
+  const dir = join(cacheDir(), 'live', id, tool.version);
+  const entry = join(dir, tool.entry);
+  if (existsSync(join(dir, '.verified'))) return entry;
+
+  log(`downloading ${id} ${tool.version} ...`);
+  const files = treeFromTarGz(await get(tool.url), 1);
+  const got = treeHash(files);
+  if (got !== tool.tree_sha256) {
+    throw new Error(`${id}: content hash mismatch for ${tool.url}\n  expected ${tool.tree_sha256}\n  got      ${got}`);
+  }
+  const tmp = `${dir}.${process.pid}.tmp`;
+  rmSync(tmp, { recursive: true, force: true });
+  for (const f of files) {
+    const dest = join(tmp, f.path);
+    mkdirSync(dirname(dest), { recursive: true });
+    writeFileSync(dest, f.data);
+    chmodSync(dest, f.mode);
+  }
+  writeFileSync(join(tmp, '.verified'), `${got}\n`);
+  rmSync(dir, { recursive: true, force: true });
+  mkdirSync(dirname(dir), { recursive: true });
+  renameSync(tmp, dir);
+  return entry;
 }
