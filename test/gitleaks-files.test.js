@@ -104,3 +104,13 @@ test('a key not committed yet is never history only', () => {
   const [f] = gitleaks.parse([leak('config.js', 'files')], { ...ctx, fileExists: () => false });
   assert.equal(evidence(f).history_only, undefined);
 });
+
+test('a file moved with git mv is committed, not "not committed yet", even if history shows no added lines at the new path', () => {
+  const moved = { ...ctx, isCommitted: () => true };
+  const [f] = gitleaks.parse([leak('app/config.js', 'files')], moved);
+  assert.equal(f.evidence[0].not_committed, undefined);
+  assert.match(f.fix, /rotate/i);
+  // a change that is only in the working folder is still "not committed yet"
+  const [g] = gitleaks.parse([leak('app/config.js', 'files')], { ...ctx, isCommitted: () => false });
+  assert.equal(g.evidence[0].not_committed, true);
+});

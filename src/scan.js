@@ -19,6 +19,13 @@ function git(root, args) {
   return r.status === 0 ? r.stdout.trim() : null;
 }
 
+// True when `file` is tracked and identical to HEAD. --literal-pathspecs: a file name from the scanned project is
+// never read as a pattern (a file called "*.js" or ":(exclude)x" must not match other files).
+export function committedUnchanged(root, file) {
+  const g = (args) => spawnSync('git', ['--literal-pathspecs', '-C', root, ...args]).status === 0;
+  return g(['ls-files', '--error-unmatch', '--', file]) && g(['diff', '--quiet', 'HEAD', '--', file]);
+}
+
 export function outDir(root) {
   return join(root, '.audit', 'out');
 }
@@ -42,6 +49,9 @@ export async function scan(target, { log = () => {}, version }) {
     commit: isGit ? git(root, ['rev-parse', '--short', 'HEAD']) : null,
     dirty: isGit ? git(root, ['status', '--porcelain']) !== '' : null,
     prefix: isGit ? git(root, ['rev-parse', '--show-prefix']) ?? '' : '',
+    // Tracked and identical to HEAD: the content is in git even when gitleaks saw no commit add it at this path
+    // (a file moved with `git mv` shows up in history as a rename with no added lines).
+    isCommitted: (file) => isGit && committedUnchanged(root, file),
     isIgnored: (file) => isGit && spawnSync('git', ['-C', root, 'check-ignore', '-q', '--', file]).status === 0,
   };
 

@@ -107,7 +107,7 @@ export default {
       const historyOnly = ctx.isGit !== false && inHistory && !inFiles.has(`${leak.RuleID}:${file}`) &&
         (filesPassRan || !fileExists(file));
       const built = kind === 'built';
-      const notCommitted = Boolean(ctx.isGit) && !inHistory && !built;
+      const notCommitted = Boolean(ctx.isGit) && !inHistory && !built && !ctx.isCommitted?.(file);
       const guess = built && leak.RuleID === 'generic-api-key';
       const fix = built ? FIX.built : notCommitted ? FIX.notCommitted : FIX.committed;
       return {

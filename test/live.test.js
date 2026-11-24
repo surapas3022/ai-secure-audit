@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, mkdtempSync, readdirSync, writeFileSync } from 'node:fs';
@@ -96,7 +97,7 @@ test('the folder hash does not depend on archive order, and changes when a byte,
 test('live refuses without a targets file or for a host not listed, and downloads nothing', () => {
   const cache = mkdtempSync(join(tmpdir(), 'asa-cache-'));
   const cwd = mkdtempSync(join(tmpdir(), 'asa-cwd-'));
-  const bin = new URL('../bin/ai-secure-audit.js', import.meta.url).pathname;
+  const bin = fileURLToPath(new URL('../bin/ai-secure-audit.js', import.meta.url));
   const run = (args) => spawnSync(process.execPath, [bin, 'live', ...args], { cwd, encoding: 'utf8', env: { ...process.env, AI_SECURE_AUDIT_CACHE: cache } });
   let r = run(['a.example']);
   assert.equal(r.status, 2);

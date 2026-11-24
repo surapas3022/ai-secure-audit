@@ -3,7 +3,7 @@
 > Status: 0.0.x on npm runs the basic check with `npx ai-secure-audit`: secrets, libraries with known holes and, from
 > 0.0.5, code rules for routes anyone can repeat without limit and, from 0.0.9, for session checks that a built-in
 > name such as `constructor` passes. From 0.0.10 it also checks Dockerfiles with trivy (Compose files are not read yet,
-> and the report says so), and from 0.0.11 it warns when a Docker build would copy these results into the image, and from 0.0.13 `--report simple` writes a short to-do list in plain words (`report-simple.md`) and `live` checks one host you list in `targets.yml`: its TLS with testssl.sh, and with `--zap` its web headers and cookies with OWASP ZAP in Docker. `live` has only been tried on servers on the same machine and a GitHub test runner, never on a real remote site, and it does not run on Windows (TLS part) or without Docker (ZAP part). v0.1 is not released yet.
+> and the report says so), and from 0.0.11 it warns when a Docker build would copy these results into the image, and from 0.0.13 `--report simple` writes a short to-do list in plain words (`report-simple.md`) and `live` checks one host you list in `targets.yml`: its TLS with testssl.sh, and with `--zap` its web headers and cookies with OWASP ZAP in Docker. `live` has only been tried on servers on the same machine and a GitHub test runner, never on a real remote site, and it does not run on Windows (TLS part) or without Docker (ZAP part). From 0.0.14 a secret in a file that was moved with `git mv` is no longer called "not committed yet" (that wording told people they could skip rotating a key that is already in git). v0.1 is not released yet.
 >
 > **มือใหม่เริ่มตรงนี้:** [learn/](learn/) ควรตรวจอะไรก่อน เพราะอะไร และแก้ยังไง (ภาษาไทย)
 >

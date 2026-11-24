@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, mkdtempSync, writeFileSync, readdirSync } from 'node:fs';
@@ -75,7 +76,7 @@ test('an http target without --zap is refused with a clear reason, and nothing i
   const cache = mkdtempSync(join(tmpdir(), 'asa-cache-'));
   const cwd = mkdtempSync(join(tmpdir(), 'asa-cwd-'));
   writeFileSync(join(cwd, 'targets.yml'), 'targets:\n  - host: a.test\n    scheme: http\n');
-  const bin = new URL('../bin/ai-secure-audit.js', import.meta.url).pathname;
+  const bin = fileURLToPath(new URL('../bin/ai-secure-audit.js', import.meta.url));
   const r = spawnSync(process.execPath, [bin, 'live', 'a.test'], { cwd, encoding: 'utf8', env: { ...process.env, AI_SECURE_AUDIT_CACHE: cache } });
   assert.equal(r.status, 2);
   assert.match(r.stderr, /plain http.*--zap/);
