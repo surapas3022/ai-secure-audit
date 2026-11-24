@@ -189,7 +189,7 @@ npx ai-secure-audit live dev.example.com
 
 (The same example ships in the package as `config/targets.example.yml`.)
 
-**Status: first release of `live` (0.0.13).** Tried on servers on the same machine (a deliberately weak TLS server and a deliberately weak web server, results compared with what was expected beforehand) and on a GitHub-hosted Linux runner. **Not tried on a real remote site**, not on Windows, not with a real https site under `--zap`, and the "no Docker" path is only unit-tested. Treat the first runs on your own site as a trial and compare with another tool (for example SSL Labs for TLS).
+**Status: first release of `live` (0.0.13); `--ports` from 0.0.15.** Tried on servers on the same machine (a deliberately weak TLS server and a deliberately weak web server, results compared with what was expected beforehand) and on a GitHub-hosted Linux runner. **Not tried on a real remote site**, not on Windows, not with a real https site under `--zap`, and the "no Docker" path is only unit-tested. Treat the first runs on your own site as a trial and compare with another tool (for example SSL Labs for TLS).
 
 `live` talks to a real server, so it is a separate command from `scan` and it is strict:
 
@@ -216,3 +216,20 @@ Adds the [OWASP ZAP](https://github.com/zaproxy/zaproxy) (Apache-2.0) **baseline
 - Findings are header, cookie and information-leak mistakes: missing CSP, X-Frame-Options, X-Content-Type-Options; cookies without HttpOnly or SameSite; server and framework versions in headers; forms without an anti-CSRF token; scripts from other sites without an integrity hash; known-vulnerable JavaScript libraries; error messages that show internals. One finding per ZAP alert, with the first three places.
 - A finding that rests on a banner the server sends about itself (for example "Apache 2.2 with known holes") is labelled that way and capped at medium, because the banner can be wrong.
 - **What a clean result does not mean:** the baseline does not find XSS, injection, broken login or access control. On the weak test server it found 10 header and cookie problems and **0** of the cross-site scripting that a plain `curl` showed was there. Every report says this.
+
+### `--ports`: risky open ports
+
+```bash
+npx ai-secure-audit live dev.example.com --ports            # with the TLS check
+npx ai-secure-audit live dev.example.com --ports --no-tls   # ports only, about 10 seconds
+```
+
+Checks which well-known risky ports accept a connection from the computer that runs this. These are the ports AI-written setups often leave open by accident: databases (PostgreSQL 5432, MySQL 3306, MongoDB 27017, Redis 6379, Elasticsearch 9200, Memcached 11211 and similar), Docker's remote API (2375, 4243: anyone who reaches it controls the machine), remote control (RDP 3389, VNC 5900, Telnet, SMB), and common development-server ports (3000, 5173, 8000, 8080 and similar).
+
+- Same gate as the rest of `live`: only a host in `targets.yml`, and `--allow-prod` for prod. It tries a fixed list of 34 ports, never a range.
+- It connects and closes at once. It sends no data and reads no banner.
+- It tries the first IPv4 **and** the first IPv6 address of the host. A firewall rule set for IPv4 is often forgotten for IPv6, so a port that is closed on one and open on the other is exactly what this is for. If one family cannot be reached from your computer, the report says so and does not count it as closed.
+- SSH (22), mail (25), HTTP (80) and HTTPS (443) are listed as "open, not rated": they are normal.
+- **What an open port proves depends on the address.** The check connects from the computer that ran it, so it can only say the port is reachable from there. On a public address that is the closest it gets to "reachable from the internet" (true only if you ran it from outside your own network). On a loopback address (`127.0.0.1`, `::1`, `localhost`) it shows the service is listening on this computer; on a private one (`10.x`, `172.16-31.x`, `192.168.x`, `169.254.x`, `100.64-127.x`, `fc00::/7`, `fe80::/10`) that it can be reached from inside that network. The finding says which. The severity does not change with the address, because the listening service is the same; read the evidence line.
+- **What "not found open" means:** closed, blocked by a firewall, or not reachable from where you ran it. It cannot tell which, and it only speaks for the computer and network you ran it from: run it from outside your own network to see what the internet sees. It says nothing about ports outside the list, or about what is behind an open port.
+- If no connection can be tried at all (for example no network), the check fails with exit code 2; it is never shown as "all closed".

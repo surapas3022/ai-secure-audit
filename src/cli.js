@@ -26,6 +26,8 @@ Options
   --report simple      also write report-simple.md: a short to-do list in plain words
   --targets <file>     for live: the list of hosts you may check (default: targets.yml)
   --zap                for live: also run the ZAP baseline web check in Docker (passive: reads responses only)
+  --ports              for live: also check well-known risky ports (databases, Docker, remote desktop, dev servers): connect and close, nothing is sent
+  --no-tls             for live: skip the TLS check (it takes about 2 minutes), for example when you only want --ports
   --allow-prod         for live: also allow hosts marked prod in the targets file
   --fail-on <level>    exit 1 if a finding is at or above: ${SEVERITY_ORDER.slice(0, 4).join(', ')}
   --advanced           add the Docker-based advanced tools (not available yet)
@@ -35,7 +37,7 @@ Options
 Results are written to <path>/.audit/out/ (git-ignored automatically).`;
 
 function parseArgs(argv) {
-  const opts = { command: 'scan', path: '.', json: false, failOn: null, advanced: false, report: null, targets: 'targets.yml', allowProd: false, zap: false };
+  const opts = { command: 'scan', path: '.', json: false, failOn: null, advanced: false, report: null, targets: 'targets.yml', allowProd: false, zap: false, ports: false, noTls: false };
   const rest = [];
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
@@ -43,6 +45,8 @@ function parseArgs(argv) {
     else if (a === '--advanced') opts.advanced = true;
     else if (a === '--allow-prod') opts.allowProd = true;
     else if (a === '--zap') opts.zap = true;
+    else if (a === '--ports') opts.ports = true;
+    else if (a === '--no-tls') opts.noTls = true;
     else if (a === '--targets') opts.targets = argv[++i];
     else if (a === '--report') opts.report = argv[++i];
     else if (a.startsWith('--report=')) opts.report = a.slice(9);
@@ -127,7 +131,7 @@ export async function main(argv) {
       case 'live': {
         if (opts.path === '.') throw new Error('live needs a host: npx ai-secure-audit live <host[:port]>');
         const log = opts.json ? () => {} : (m) => process.stderr.write(`${m}\n`);
-        const { out, result } = await live(opts.path, { targetsFile: opts.targets, allowProd: opts.allowProd, zap: opts.zap, log, version: pkg.version });
+        const { out, result } = await live(opts.path, { targetsFile: opts.targets, allowProd: opts.allowProd, zap: opts.zap, ports: opts.ports, noTls: opts.noTls, log, version: pkg.version });
         const r = relative(process.cwd(), out).split('\\').join('/');
         process.stdout.write(opts.json ? JSON.stringify(result, null, 2) + '\n' : liveSummary(result, r) + '\n');
         if (result.tools.some((t) => t.status === 'failed')) return 2;

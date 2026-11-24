@@ -5,6 +5,7 @@ import { ensureFolderTool, liveTools } from './tools.js';
 import { sortAndNumber, countBySeverity } from './findings.js';
 import { loadTargets, resolveTarget } from './targets.js';
 import { parseTestssl, testsslArgs } from './live/testssl.js';
+import { scanPorts, parsePorts, PORT_LIST } from './live/ports.js';
 import { parseZap, zapDockerArgs, zapUrl, ZAP_NOT_CHECKED } from './live/zap.js';
 
 // `live` checks one host from the targets file. It is a different kind of check from `scan`:
@@ -49,25 +50,35 @@ function zapStep({ target, out, log }) {
   return parseZap(JSON.parse(readFileSync(rawFile, 'utf8') || 'null'), { url });
 }
 
-export async function live(arg, { targetsFile, allowProd, zap = false, log = () => {}, version, cwd = process.cwd() }) {
+async function portsStep({ target, log }) {
+  log(`checking ${PORT_LIST.length} well-known risky ports on ${target.host} (connect and close, nothing is sent; about 10 seconds) ...`);
+  return parsePorts(await scanPorts(target.host), { host: target.host });
+}
+
+export async function live(arg, { targetsFile, allowProd, zap = false, ports = false, noTls = false, log = () => {}, version, cwd = process.cwd() }) {
   const target = resolveTarget(arg, loadTargets(resolve(cwd, targetsFile)), { allowProd });
   const { host, port } = target;
-  if (target.scheme === 'http' && !zap) {
-    throw new Error(`${host}:${port} is plain http, so there is no TLS to check. Add --zap to check the web site itself.`);
+  if (target.scheme === 'http' && !zap && !ports) {
+    throw new Error(`${host}:${port} is plain http, so there is no TLS to check. Add --zap to check the web site itself, or --ports to check open ports.`);
   }
+  if (noTls && !zap && !ports) throw new Error('--no-tls leaves nothing to check: add --zap or --ports');
 
   const out = join(cwd, '.audit', 'out', 'live', `${host}-${port}`);
   mkdirSync(out, { recursive: true });
   writeFileSync(join(cwd, '.audit', 'out', '.gitignore'), '*\n');
 
   const steps = [];
-  if (target.scheme === 'https') steps.push({ id: 'testssl', run: tlsStep, tool: liveTools().testssl });
-  else steps.push({ id: 'testssl', skip: 'plain http: there is no TLS to check', tool: liveTools().testssl });
+  if (target.scheme !== 'https') steps.push({ id: 'testssl', skip: 'plain http: there is no TLS to check', tool: liveTools().testssl });
+  else if (noTls) steps.push({ id: 'testssl', skip: 'left out with --no-tls', tool: liveTools().testssl });
+  else steps.push({ id: 'testssl', run: tlsStep, tool: liveTools().testssl });
   if (zap) steps.push({ id: 'zap-baseline', run: zapStep, tool: liveTools().zap });
+  if (ports) steps.push({ id: 'port-check', run: portsStep, tool: { version: 'built-in', license: 'Apache-2.0' } });
 
   const runs = [];
   let findings = [];
   let notices = [];
+  const openNotRated = [];
+  const addresses = [];
   for (const s of steps) {
     const run = { id: s.id, version: s.tool.version, license: s.tool.license, status: 'ok' };
     runs.push(run);
@@ -77,6 +88,8 @@ export async function live(arg, { targetsFile, allowProd, zap = false, log = () 
       const found = parsed.findings.map((f) => ({ ...f, source: { ...f.source, tool_version: s.tool.version } }));
       findings = findings.concat(found);
       notices = notices.concat(parsed.notices);
+      if (parsed.info) openNotRated.push(...parsed.info);
+      if (parsed.addresses) addresses.push(...parsed.addresses);
       run.findings = found.length;
     } catch (err) {
       run.status = 'failed';
@@ -88,15 +101,21 @@ export async function live(arg, { targetsFile, allowProd, zap = false, log = () 
   if (steps.some((s) => s.id === 'testssl' && !s.skip)) {
     notes.push('TLS check: only this one host and port: protocols, ciphers, the certificate, HSTS and known TLS weaknesses.');
   }
+  if (ports) {
+    notes.push('Port check: only a fixed list of well-known risky ports was tried, from the computer that ran this, by connecting and closing at once. ' +
+      '"Not open" means closed, blocked by a firewall, or not reachable from here: it cannot tell which, and it says nothing about ports outside the list or about what runs behind an open port.');
+  }
   if (zap) notes.push(`Web check: ${ZAP_NOT_CHECKED} It also trusts what the server says about itself (a made-up Server header is believed).`);
   notes.push('Not checked: the app\'s own logic (who may see or change what), other hosts and ports.');
 
   const result = {
     generator: `ai-secure-audit ${version}`,
-    check: zap ? 'live-tls-web' : 'live-tls',
+    check: ['live', noTls || target.scheme !== 'https' ? null : 'tls', zap ? 'web' : null, ports ? 'ports' : null].filter(Boolean).join('-'),
     target: { host, port, scheme: target.scheme, env: target.env },
     tools: runs,
     notices,
+    ...(addresses.length ? { addresses_tried: addresses } : {}),
+    open_not_rated: openNotRated,
     notes,
     findings: sortAndNumber(findings),
   };
@@ -120,7 +139,7 @@ export function liveReport(result, date) {
   if (!findings.length && !failed.length) L.push('No problems found by these tools. That does not cover what is listed under "What this check did not see".', '');
   for (const f of findings) {
     L.push(`### ${f.id}: ${f.title} (${f.severity.normalized})`, '');
-    L.push(`**Found by:** ${f.category === 'web' ? 'ZAP baseline (web)' : 'testssl (TLS)'}`, '');
+    L.push(`**Found by:** ${{ web: 'ZAP baseline (web)', network: 'port check', tls: 'testssl (TLS)' }[f.category] ?? f.category}`, '');
     L.push(`**Where / what was seen:** ${f.evidence.map((e) => `\`${e.location}\`${e.detail ? ` (${e.detail})` : ''}`).join('; ')}`, '');
     L.push(`**How to fix it:** ${f.fix}`, '');
   }
@@ -128,6 +147,10 @@ export function liveReport(result, date) {
     L.push('## Tests that could not run', '');
     for (const n of notices) L.push(`- ${n.message}`);
     L.push('');
+  }
+  if (result.addresses_tried?.length) L.push('## Addresses tried by the port check', '', ...result.addresses_tried.map((a) => `- ${a}`), '');
+  if (result.open_not_rated?.length) {
+    L.push('## Open ports that are not rated', '', `Seen open: ${result.open_not_rated.join(', ')}. These are normal on many servers; they are listed so you know they answer.`, '');
   }
   L.push('## What this check did not see', '');
   for (const n of result.notes) L.push(`- ${n}`);
