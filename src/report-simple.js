@@ -1,4 +1,5 @@
 import { countBySeverity } from './findings.js';
+import { NO_LIBRARY_CHECK } from './coverage.js';
 
 // Plain report for someone who does not know security words.
 // Rules: no tool names, no commit hashes, no CWE ids, no severity jargon.
@@ -65,9 +66,14 @@ export function reportSimple(result, date) {
     lines.push('> **The check is incomplete:** some parts did not run. Do not treat "nothing found" as safe until they do.', '');
   }
 
+  const noLibraries = result.coverage?.gaps?.some((g) => g.startsWith(NO_LIBRARY_CHECK));
+  if (noLibraries) {
+    lines.push('> **Some libraries were not checked.** See "What was not checked" below.', '');
+  }
+
   const total = c.critical + c.high + c.medium + c.low;
   if (total === 0) {
-    lines.push(failed.length ? 'Nothing found by the parts that ran.' : '**Nothing found by these tools.** That is good, but read "What was not checked" below.', '');
+    lines.push(failed.length || noLibraries ? 'Nothing found by the parts that ran.' : '**Nothing found by these tools.** That is good, but read "What was not checked" below.', '');
   } else {
     lines.push(`**${total} thing${total === 1 ? '' : 's'} to fix.** Start at number 1 and work down. After each fix, run \`npx ai-secure-audit retest\` to see it disappear from the list.`, '');
   }

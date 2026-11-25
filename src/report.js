@@ -1,4 +1,5 @@
 import { countBySeverity } from './findings.js';
+import { NO_LIBRARY_CHECK } from './coverage.js';
 
 // Plain-language explanations, by finding category.
 const PLAIN = {
@@ -60,6 +61,11 @@ export function reportMarkdown(result, date) {
   const failed = tools.filter((t) => t.status !== 'ok');
   if (failed.length) {
     lines.push('> **Some checks did not run:** ' + failed.map((t) => `${t.id} (${t.error})`).join('; '));
+    lines.push('');
+  }
+
+  if (result.coverage?.gaps?.some((g) => g.startsWith(NO_LIBRARY_CHECK))) {
+    lines.push('> **Some libraries were not checked.** See "What this check could not see" below.');
     lines.push('');
   }
 

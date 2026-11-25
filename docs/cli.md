@@ -46,7 +46,13 @@ Options: `--report simple` (also write `report-simple.md`, a short to-do list in
 - osv-scanner reads lockfiles (`package-lock.json`, `pnpm-lock.yaml`, `yarn.lock`, `pubspec.lock`, `requirements.txt`
   and others) and checks them against an offline copy of the public OSV database. The first run downloads the
   database for each ecosystem it finds (npm was about 210 MB in November 2026) to the user cache; the list of libraries never
-  leaves the machine. `node_modules/` and files git ignores are skipped. A folder with no lockfile gives no findings.
+  leaves the machine. `node_modules/` and files a `.gitignore` names are skipped (even committed ones). Libraries are
+  only checked from a lockfile (or `requirements.txt`, `go.mod`, `pom.xml`). The report says "Libraries not checked", at
+  the top and under what was not checked, when a manifest that lists libraries (`package.json`, `composer.json`,
+  `Gemfile`, `Cargo.toml`, `pyproject.toml`, `Pipfile`, `pubspec.yaml`, `*.csproj`, `build.gradle`, `mix.exs`) has no
+  lockfile, and when a lockfile is there but osv-scanner read no library from it. A lockfile at the top of an npm, pnpm or
+  Cargo workspace covers its members. Known limit: in a hand-made `package-lock.json` without `resolved` fields,
+  osv-scanner 2.7.0 lists the libraries but matches no advisory, and this is not detected.
 - In a git repository gitleaks runs twice, over the commits and over the current files, so a key that is not committed
   yet is still found. Files git ignores are left out, except build output (`dist/`, `build/`, `.next/static/`,
   `.output/public/`, `.svelte-kit/output/client/`), because that is what gets deployed. Files over 20 MB are skipped.

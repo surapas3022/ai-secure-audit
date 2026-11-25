@@ -57,6 +57,79 @@ export const LOCKFILES = {
   'mix.lock': { ecosystem: 'Hex (Elixir)', tested: false },
 };
 
+// Files that list libraries without fixing their versions, and the lockfiles that do. A project with one of these and no
+// lockfile gets no library check at all, so the report has to say it. `uses` is true when the file really asks for a library.
+const matches = (re) => (text) => re.test(text);
+const json = (read) => (text) => { try { return read(JSON.parse(text)); } catch { return true; } };
+const anyKey = (...objects) => objects.some((o) => o && Object.keys(o).length > 0);
+const MANIFESTS = [
+  { is: (n) => n === 'package.json', locks: ['package-lock.json', 'npm-shrinkwrap.json', 'yarn.lock', 'pnpm-lock.yaml', 'bun.lock'],
+    uses: json((p) => anyKey(p.dependencies, p.devDependencies, p.optionalDependencies, p.peerDependencies)) },
+  // "php" and "ext-*" are the platform, not libraries: library names contain a slash.
+  { is: (n) => n === 'composer.json', locks: ['composer.lock'],
+    uses: json((p) => Object.keys({ ...p.require, ...p['require-dev'] }).some((k) => k.includes('/'))) },
+  { is: (n) => n === 'Gemfile', locks: ['Gemfile.lock'], uses: matches(/^\s*gem\s/m) },
+  { is: (n) => n === 'Cargo.toml', locks: ['Cargo.lock'], uses: matches(/^\[(?:[^\]\n]*\.)?(?:dev-|build-)?dependencies(?:\.[^\]\n]*)?\]/m) },
+  { is: (n) => n === 'pyproject.toml', locks: ['poetry.lock', 'uv.lock', 'Pipfile.lock', 'requirements.txt'],
+    uses: matches(/^\s*dependencies\s*=\s*\[\s*[^\]\s]|^\[(?:tool\.poetry\.(?:[\w.-]+\.)?dependencies|project\.optional-dependencies|dependency-groups)\]/m) },
+  { is: (n) => n === 'Pipfile', locks: ['Pipfile.lock'], uses: matches(/^\[(?:dev-)?packages\][ \t]*\r?\n(?:[ \t]*(?:#.*)?\r?\n)*[ \t]*[^\[\s#]/m) },
+  { is: (n) => n === 'pubspec.yaml', locks: ['pubspec.lock'], uses: matches(/^(?:dev_)?dependencies:/m) },
+  { is: (n) => n.endsWith('.csproj'), locks: ['packages.lock.json'], uses: matches(/<PackageReference\b/) },
+  { is: (n) => n === 'build.gradle' || n === 'build.gradle.kts', locks: ['gradle.lockfile'],
+    uses: matches(/\b(?:implementation|api|compileOnly|runtimeOnly|testImplementation)\b/) },
+  { is: (n) => n === 'mix.exs', locks: ['mix.lock'], uses: matches(/\bdefp?\s+deps\b/) },
+];
+
+// Output written by a deploy tool: its package.json files are copies, not something a person keeps a lockfile for.
+const GENERATED = /(?:^|\/)\.(?:vercel|netlify|serverless|wrangler)\//;
+
+const parent = (dir) => (dir.includes('/') ? dir.slice(0, dir.lastIndexOf('/')) : '');
+const at = (dir, name) => (dir ? `${dir}/${name}` : name);
+const globRe = (glob) => new RegExp(`^${glob.replace(/^\.\//, '').replace(/\/$/, '')
+  .replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*\*|\*|\?/g, (m) => (m === '**' ? '.*' : m === '*' ? '[^/]*' : '[^/]'))}$`);
+
+// The folders a workspace at `dir` says belong to it (npm, yarn, pnpm and Cargo keep one lockfile at the top).
+function workspaceMembers(root, dir, files) {
+  const read = (name) => { try { return files.has(at(dir, name)) ? readFileSync(join(root, dir, name), 'utf8') : ''; } catch { return ''; } };
+  const globs = [];
+  try {
+    const w = JSON.parse(read('package.json') || '{}').workspaces;
+    globs.push(...(Array.isArray(w) ? w : w?.packages ?? []));
+  } catch { /* an unreadable package.json declares no workspace */ }
+  for (const m of read('pnpm-workspace.yaml').matchAll(/^\s*-\s*['"]?([^'"#\r\n]+?)['"]?\s*(?:#.*)?$/gm)) globs.push(m[1]);
+  const cargo = /^\[workspace\][^[]*?members\s*=\s*\[([^\]]*)\]/m.exec(read('Cargo.toml'));
+  if (cargo) globs.push(...[...cargo[1].matchAll(/['"]([^'"]+)['"]/g)].map((m) => m[1]));
+  const include = globs.filter((g) => typeof g === 'string' && !g.startsWith('!')).map(globRe);
+  const exclude = globs.filter((g) => typeof g === 'string' && g.startsWith('!')).map((g) => globRe(g.slice(1)));
+  return (sub) => include.some((re) => re.test(sub)) && !exclude.some((re) => re.test(sub));
+}
+
+function manifestsWithoutLockfile(root, list) {
+  const files = new Set(list);
+  const missing = [];
+  for (const f of list) {
+    const name = basename(f);
+    const kind = MANIFESTS.find((m) => m.is(name));
+    if (!kind || GENERATED.test(f)) continue;
+    const dir = f === name ? '' : f.slice(0, -name.length - 1);
+    if (kind.locks.some((l) => files.has(at(dir, l)))) continue;
+    let covered = false;
+    for (let up = dir; up && !covered;) {
+      up = parent(up);
+      if (kind.locks.some((l) => files.has(at(up, l)))) covered = workspaceMembers(root, up, files)(up ? dir.slice(up.length + 1) : dir);
+    }
+    if (covered) continue;
+    let text = '';
+    try { text = readFileSync(join(root, f), 'utf8'); } catch { missing.push(f); continue; }
+    if (kind.uses(text)) missing.push(f);
+  }
+  return missing;
+}
+
+const named = (files) => `${files.slice(0, 5).join(', ')}${files.length > 5 ? ` and ${files.length - 5} more` : ''}`;
+// Gaps that start like this mean some libraries got no check; the reports repeat it at the top.
+export const NO_LIBRARY_CHECK = 'Libraries not checked:';
+
 // Languages the kit's own code rules read, taken from the rule files so the list cannot fall behind them.
 export function ruleLanguages(rulesDir = fileURLToPath(new URL('../rules/', import.meta.url))) {
   const langs = new Set();
@@ -96,7 +169,7 @@ export function projectCoverage(root, { rulesDir, limit = 200_000 } = {}) {
   }
   const languages = [...counts].sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1))
     .map(([language, n]) => ({ language, files: n, code_rules: covered.has(language) }));
-  return { languages, lockfiles, compose, truncated: files.length >= limit };
+  return { languages, lockfiles, compose, unlocked: manifestsWithoutLockfile(root, files), truncated: files.length >= limit };
 }
 
 // Plain sentences for the report and for the AI assistant. Empty when everything found is covered.
@@ -109,7 +182,18 @@ export function coverageGaps(cov) {
       'AI assistant with the prompt in https://github.com/surapas3022/ai-secure-audit/blob/main/docs/ai-review-prompt.md ' +
       '(its results are leads to check, not findings).');
   }
-  const untested = cov.lockfiles.filter((l) => !l.tested);
+  if (cov.unlocked?.length) {
+    gaps.push(`${NO_LIBRARY_CHECK} no lockfile (the file that records exact library versions) was found for ${named(cov.unlocked)}, ` +
+      'so the libraries listed there were not looked at; "0 findings" says nothing about them. Create the lockfile with your ' +
+      'package manager (for npm: npm install --package-lock-only), keep it in git, and run the check again.');
+  }
+  const unread = new Set(cov.unread ?? []);
+  if (unread.size) {
+    gaps.push(`${NO_LIBRARY_CHECK} osv-scanner read no libraries from ${named([...unread])}. It skips files that a .gitignore ` +
+      'names, even committed ones; the other usual reason is a file that lists no libraries. "0 findings" says nothing about ' +
+      'them. If .gitignore names the lockfile or its folder, remove that line and run the check again.');
+  }
+  const untested = cov.lockfiles.filter((l) => !l.tested && !unread.has(l.file));
   if (untested.length) {
     gaps.push(`Libraries: ${untested.map((l) => `${l.file} (${l.ecosystem})`).join(', ')} ` +
       'were read by osv-scanner, but this kit has not tested that ecosystem with known answers yet.');

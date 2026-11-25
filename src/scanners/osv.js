@@ -48,11 +48,16 @@ export default {
   },
 
   args(ctx, out) {
-    return ['scan', 'source', '-r', '--offline-vulnerabilities', '--download-offline-databases', '--allow-no-lockfiles',
+    return ['scan', 'source', '-r', '--offline-vulnerabilities', '--download-offline-databases', '--allow-no-lockfiles', '--all-packages',
       '--format', 'json', '--output-file', out, '--verbosity', 'error', ctx.root];
   },
 
   okExit: [0, 1],
+
+  // The files libraries were really read from. A lockfile on disk that is not here was skipped.
+  filesRead(json, ctx) {
+    return (json?.results ?? []).filter((r) => r.packages?.length).map((r) => rel(ctx.root, r.source?.path));
+  },
 
   parse(json, ctx) {
     const findings = [];
