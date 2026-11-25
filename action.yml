@@ -12,7 +12,7 @@ inputs:
     default: high
   version:
     description: ai-secure-audit version from npm. Pin it so results do not change under you.
-    default: "0.0.11"
+    default: "0.0.14"
 runs:
   using: composite
   steps:
