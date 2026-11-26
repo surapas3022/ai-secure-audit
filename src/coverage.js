@@ -168,7 +168,7 @@ export function ruleSummaries(rulesDir = RULES_DIR) {
 export const NOT_LOOKED_FOR = [
   'SQL built from user input in another file, NoSQL queries or shell commands built from user input',
   'eval or similar running text the user sent',
-  'HTML put on the page without escaping (XSS)',
+  'HTML put on the page from values whose names do not look like text people type, or through other variables (XSS)',
   'redirects or server-side requests to a URL the user chose',
   'folders served as file lists',
   'passwords stored with a fast hash such as MD5 or SHA-1',

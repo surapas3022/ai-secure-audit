@@ -1,0 +1,143 @@
+rules:
+  - id: js-html-from-user-text
+    languages: [javascript, typescript]
+    severity: WARNING
+    message: >-
+      Text that people type (a name, comment, note, title or message) is put into HTML without escaping. If someone
+      types <img src=x onerror=...> as their name, the browser runs it for everyone who opens the page: it can read
+      what they see, act as them, or send their session away. Escape the text before it goes into HTML (a small
+      esc() that replaces & < > " ' with entities), or set it with textContent instead of innerHTML. If the field
+      must hold formatted HTML, clean it with DOMPurify first.
+    metadata:
+      category: code
+      cwe: "CWE-79: Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')"
+      asvs: 'OWASP ASVS 5.0 V1.2.1 (output encoding for the HTML context)'
+      # Shown in the report's list of what the code rules look for.
+      summary: 'text people type (names, comments, titles) put into HTML without escaping, React dangerouslySetInnerHTML, Angular bypassSecurityTrust*'
+      confidence: MEDIUM
+      limitations: >-
+        Judges by the field's name (name, title, text, comment, note, description, message, ...), so it misses text
+        kept under other names and can flag a field the server already escaped before saving. A bare variable is
+        matched only when it is taken out of a record in an arrow function's parameters. Does not follow a value
+        through other variables or functions. Raw output in .vue, .svelte and template files (EJS, Handlebars, Pug)
+        is not checked by this rule.
+    patterns:
+      - pattern-either:
+          # 1. A template literal that builds HTML (it has a tag) with a user-text field placed straight in it,
+          # wherever it goes: helper functions usually return the markup and the caller sets innerHTML.
+          # esc(x.name) or String(x.name).replace(...) is a call, so it is not matched. The finding is at the line
+          # where the template that holds the field starts, so a template with nested templates is one finding.
+          - patterns:
+              - pattern: $T
+              # Cheap test first: $T is a template literal itself (not a call or function around one), it has a
+              # tag so it is HTML, and it is not an XML document. Only then look for a field inside it.
+              - metavariable-regex:
+                  metavariable: $T
+                  regex: &html_template '(?s)`(?!\s*<\?xml).*?<[a-zA-Z]'
+              - metavariable-pattern:
+                  metavariable: $T
+                  patterns:
+                    - pattern: "`...${$O.$F}...`"
+                    - metavariable-regex:
+                        metavariable: $F
+                        regex: &fields (?i)^((?!class|tag|node|host|path|icon|event|field|prop|key|type|method|font|attr|css|var|func|fn|param)[a-z_]*(name|title|text|message|msg|comment|note|desc|description|content|bio|caption|review|feedback|reply|answer|question|reason|address|intro|greeting|subject|nickname|username)s?|value|query|about|innertext|textcontent)$
+              # A tagged template (lit-html `html`, a sanitizing tag) does its own escaping. opengrep 1.33.1 already
+              # reads a tagged template as a call, so this changes nothing there; kept in case another version does not.
+              - pattern-not-inside: $TAG`...`
+          # 1b. A field taken out of a record: rows.map(({ title }) => `...${title}...`). Only an arrow whose body is the
+          # template itself; a bare variable on its own is not matched (in real code it is as often a UI string or
+          # prebuilt HTML).
+          - patterns:
+              - pattern: "({..., $F, ...}) => $BODY"
+              - metavariable-regex:
+                  metavariable: $F
+                  regex: *fields
+              - metavariable-regex:
+                  metavariable: $BODY
+                  regex: *html_template
+              - metavariable-pattern:
+                  metavariable: $BODY
+                  patterns:
+                    - pattern: "`...${$F}...`"
+          # 2. Put into an HTML sink by concatenation or a template without a tag.
+          - patterns:
+              - pattern-either:
+                  - pattern: $EL.innerHTML = $X
+                  - pattern: $EL.outerHTML = $X
+                  - pattern: $EL.innerHTML += $X
+                  - pattern: $EL.insertAdjacentHTML($POS, $X)
+                  - pattern: document.write($X)
+                  - pattern: document.writeln($X)
+                  # jQuery only: $(...), jQuery(...) or a variable named with a leading $. opengrep reads a tagged
+                  # template html`...` as a call named html, so a bare $JQ.html would match escaping tags.
+                  - patterns:
+                      - pattern-either:
+                          - pattern: $JQ.html($X)
+                          - pattern: $JQ.append($X)
+                          - pattern: $JQ.prepend($X)
+                      - pattern-either:
+                          - pattern: $(...).$M($X)
+                          - pattern: jQuery(...).$M($X)
+                          - patterns:
+                              - pattern: $JQ.$M($X)
+                              - metavariable-regex:
+                                  metavariable: $JQ
+                                  regex: ^\$\w+$
+                  - patterns:
+                      - pattern: $RES.send($X)
+                      - metavariable-regex:
+                          metavariable: $RES
+                          regex: ^(res|response)$
+              # $X is the markup itself, or a list joined into markup (rows.map(...).join('')). A value handed to
+              # another function first (page(title, body), layout(...)) is not searched: that function may escape it.
+              - metavariable-regex:
+                  metavariable: $X
+                  regex: '(?s)(?![\w$.]+\s*\()|[\w$.]*\.(?:map|join|concat|reduce|filter)\s*\('
+              - metavariable-pattern:
+                  metavariable: $X
+                  patterns:
+                    - pattern-either:
+                        # A template with a tag is already found by 1.
+                        - patterns:
+                            - pattern: "`...${$O.$F}...`"
+                            - pattern-not-regex: '<[a-zA-Z]'
+                        - pattern: $S + $O.$F
+                        - pattern: $O.$F + $S
+                        - pattern: "({..., $F, ...}) => $S + $F"
+                    - metavariable-regex:
+                        metavariable: $F
+                        regex: *fields
+              - pattern-not: $EL.innerHTML = $TAG`...`
+              - pattern-not: $RES.send($TAG`...`)
+          # 3. The field on its own.
+          - patterns:
+              - pattern-either:
+                  - pattern: $EL.innerHTML = $O.$F
+                  - pattern: $EL.outerHTML = $O.$F
+                  - pattern: $EL.insertAdjacentHTML($POS, $O.$F)
+                  - pattern: document.write($O.$F)
+              - metavariable-regex:
+                  metavariable: $F
+                  regex: *fields
+          # 4. React: anything but a literal or a sanitizer's result in __html.
+          - patterns:
+              - pattern: '<$TAGNAME dangerouslySetInnerHTML={{__html: $V}} />'
+              - pattern-not: '<$TAGNAME dangerouslySetInnerHTML={{__html: "..."}} />'
+              - pattern-not: '<$TAGNAME dangerouslySetInnerHTML={{__html: $SAN.sanitize(...)}} />'
+              - pattern-not: '<$TAGNAME dangerouslySetInnerHTML={{__html: sanitize(...)}} />'
+              - pattern-not: '<$TAGNAME dangerouslySetInnerHTML={{__html: sanitizeHtml(...)}} />'
+              - pattern-not: '<$TAGNAME dangerouslySetInnerHTML={{__html: xss(...)}} />'
+          # 5. Angular: bypassSecurityTrust* turns Angular's own escaping off for the value. Anything but a literal or
+          # a sanitizer's result is reported, whatever the field is called.
+          - patterns:
+              - pattern-either:
+                  - pattern: $S.bypassSecurityTrustHtml($V)
+                  - pattern: $S.bypassSecurityTrustScript($V)
+                  - pattern: $S.bypassSecurityTrustStyle($V)
+                  - pattern: $S.bypassSecurityTrustUrl($V)
+                  - pattern: $S.bypassSecurityTrustResourceUrl($V)
+              - pattern-not: $S.$BYPASS("...")
+              - pattern-not: $S.$BYPASS($SAN.sanitize(...))
+              - pattern-not: $S.$BYPASS(sanitize(...))
+              - pattern-not: $S.$BYPASS(sanitizeHtml(...))
+

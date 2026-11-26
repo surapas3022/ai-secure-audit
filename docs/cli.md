@@ -89,6 +89,18 @@ Options: `--report simple` (also write `report-simple.md`, a short to-do list in
   passed through `Number`, `parseInt`, `parseFloat` or an `escape` function, or used only to build `?` placeholders.
   **Missed:** SQL built in another file from a function parameter (a `db.js` helper called from a route file), which
   is a common layout; query builders other than the calls above; NoSQL.
+- `js-html-from-user-text` (medium, not released yet): text people type put into HTML without escaping. Judged by
+  the field's name (`name`, `title`, `text`, `comment`, `message`, `description`, `content`, `bio`, ... and `value`,
+  `query`): a field placed straight into a template literal that has a tag, or joined by `+` into `innerHTML`,
+  `outerHTML`, `insertAdjacentHTML`, `document.write`, jQuery `.html/.append/.prepend` (on `$(...)`, `jQuery(...)` or
+  a `$`-named variable) or Express `res.send`. Also any non-literal, unsanitized value in React
+  `dangerouslySetInnerHTML` or Angular `bypassSecurityTrustHtml/Script/Style/Url/ResourceUrl`. Not matched: a field
+  passed through a call such as `esc(x.name)`, tagged templates (lit-html `html`, escaping tags), XML documents
+  (`<?xml`), and values handed to another function first (`res.send(page(title, body))`). A template with nested
+  templates is one finding, at the line where it starts.
+  **Missed or wrong:** text kept under other field names, a value passed through other variables, and HTML built in
+  `.vue`, `.svelte` or template files. Known false findings: a boolean flag named like text (`aria-pressed="${c.text}"`),
+  labels the app wrote in its own array, and tag-like text that is not HTML (an AI prompt with `<doc title="...">`).
 - **What was not checked.** The CLI counts source files by extension and lists lockfiles (skipping installed and
   generated folders), then writes `coverage` into `findings.json`: each language with its file count and whether this
   kit has code rules for it (taken from the `languages:` of the rule files), the rules that apply to those languages
