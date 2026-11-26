@@ -85,7 +85,7 @@ test('opengrep: local rules only, rule test files and installed code are never s
   assert.ok(args.includes('--disable-version-check'));
   assert.ok(args[args.indexOf('--config') + 1].endsWith('rules/') || args[args.indexOf('--config') + 1].endsWith('rules\\'));
   const excluded = args.filter((a, i) => args[i - 1] === '--exclude');
-  for (const x of ['node_modules', 'express-route-no-rate-limit.js', 'nestjs-route-no-throttle.ts', 'express-vote-route-no-identity.js', 'express-session-lookup-plain-object.js', 'sql-built-from-request.ts', 'js-html-from-user-text.js', 'js-code-from-text.js']) assert.ok(excluded.includes(x), x);
+  for (const x of ['node_modules', 'express-route-no-rate-limit.js', 'nestjs-route-no-throttle.ts', 'express-vote-route-no-identity.js', 'express-session-lookup-plain-object.js', 'sql-built-from-request.ts', 'js-html-from-user-text.js', 'js-code-from-text.js', 'sql-built-from-parameter.js']) assert.ok(excluded.includes(x), x);
   assert.ok(args.includes('--taint-intrafile'));
 });
 
@@ -141,4 +141,18 @@ test('opengrep: files it could not read, read in part, or stopped on are listed 
   });
   assert.deepEqual(opengrep.codeRead({ results: [] }, ctx), { not_read: [], read_in_part: [], stopped: [] });
   assert.deepEqual(opengrep.codeRead(null, ctx), { not_read: [], read_in_part: [], stopped: [] });
+});
+
+test('opengrep: a finding marked suppressed-on-same-line-by is dropped only where that rule reported the same line', () => {
+  const r = (id, file, line, meta = {}) => ({ check_id: `x.rules.${id}`, path: `/tmp/asa-fixture/${file}`, start: { line },
+    extra: { message: 'T. Fix.', severity: 'WARNING', metadata: meta, lines: 'db.query(x)' } });
+  const param = { 'suppressed-on-same-line-by': 'sql-built-from-request' };
+  const got = opengrep.parse({ results: [
+    r('sql-built-from-request', 'a.ts', 5),
+    r('sql-built-from-parameter', 'a.ts', 5, param),
+    r('sql-built-from-parameter', 'a.ts', 9, param),
+    r('sql-built-from-parameter', 'b.ts', 5, param),
+  ] }, ctx);
+  assert.deepEqual(got.map((f) => `${f.source.rule_id}@${f.evidence[0].location}`),
+    ['sql-built-from-request@a.ts:5', 'sql-built-from-parameter@a.ts:9', 'sql-built-from-parameter@b.ts:5']);
 });

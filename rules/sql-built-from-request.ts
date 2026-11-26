@@ -187,3 +187,10 @@ app.get('/not-sql', (req, res) => {
   const m = /a(b)/.exec(req.query.s as string);
   res.json({ v, m });
 });
+
+// --- An HTTP client is not a database: .get on a client is a request, not a query ---
+declare const client: any;
+app.get('/fetch', (req, res) => {
+  // ok: sql-built-from-request
+  client.get(req.query.url as string, () => res.end());
+});

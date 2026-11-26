@@ -77,15 +77,23 @@ rules:
               - pattern: $DB.query($SQL, ...)
               - pattern: $DB.execute($SQL, ...)
               - pattern: $DB.raw($SQL, ...)
+          # Only receivers named like a database handle, so other objects' query() are not matched.
+          - metavariable-regex:
+              metavariable: $DB
+              regex: (?i)(.*\.)?(\w*db|database|sqlite\w*|conn|connection|pool|client|knex|sequelize|sql|tx|trx|manager|entitymanager|datasource|queryrunner|\w*repo(sitory)?)$
+          - focus-metavariable: $SQL
+      # get, all, run, exec and prepare are common names (an HTTP client's get, Map.get, RegExp.exec): only on a
+      # receiver named like a SQLite handle or statement.
+      - patterns:
+          - pattern-either:
               - pattern: $DB.all($SQL, ...)
               - pattern: $DB.get($SQL, ...)
               - pattern: $DB.run($SQL, ...)
               - pattern: $DB.exec($SQL, ...)
               - pattern: $DB.prepare($SQL, ...)
-          # Only receivers named like a database handle, so Map.get or RegExp.exec are not matched.
           - metavariable-regex:
               metavariable: $DB
-              regex: (?i)(.*\.)?(\w*db|database|sqlite\w*|conn|connection|pool|client|knex|sequelize|sql|tx|trx|manager|entitymanager|datasource|queryrunner|\w*repo(sitory)?)$
+              regex: (?i)(.*\.)?(\w*db|database|sqlite\w*|stmt|statement)$
           - focus-metavariable: $SQL
       - patterns:
           - pattern-either:

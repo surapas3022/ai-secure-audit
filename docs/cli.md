@@ -87,8 +87,18 @@ Options: `--report simple` (also write `report-simple.md`, a short to-do list in
   and into a helper function in the same file (opengrep runs with `--taint-intrafile`). Not matched when the value is
   sent apart from the SQL (a placeholder with a values array, Sequelize `replacements`, tagged `prisma.$queryRaw`),
   passed through `Number`, `parseInt`, `parseFloat` or an `escape` function, or used only to build `?` placeholders.
-  **Missed:** SQL built in another file from a function parameter (a `db.js` helper called from a route file), which
-  is a common layout; query builders other than the calls above; NoSQL.
+  `get`, `all`, `run`, `exec` and `prepare` count only on a receiver named like a SQLite handle (`db`, `database`,
+  `sqlite`, `stmt`): an HTTP client's `client.get(url)` was reported as SQL before.
+  **Missed:** SQL built in another file from a function parameter (see the next rule); query builders other than
+  the calls above; NoSQL; a client with a short name such as `c` (`c.query(...)`).
+- `sql-built-from-parameter` (medium, not released yet): the other half of the SQL check, for a db helper in its own
+  file. A parameter of the function written straight into the SQL text as a value: inside quotes (`'${email}'`,
+  `"= '" + name`) or right after `=`, `<`, `>`, `IN (`, `ORDER BY`, `LIMIT`, `OFFSET`; followed through variables
+  into the same calls as `sql-built-from-request`. Dropped where that rule already reports the same line. Not
+  matched: a parameter that is a whole SQL fragment (`WHERE ${where}`) or the whole SQL text (`query(text, params)`),
+  which in the apps tried was fixed text the caller wrote (21 false findings before this limit, 1 after).
+  **Missed or wrong:** it cannot see the callers, so a parameter that only holds a value from the code itself is
+  reported too; column names from an object's keys (`SET ${sets.join()}`) are missed.
 - `js-html-from-user-text` (medium, not released yet): text people type put into HTML without escaping. Judged by
   the field's name (`name`, `title`, `text`, `comment`, `message`, `description`, `content`, `bio`, ... and `value`,
   `query`): a field placed straight into a template literal that has a tag, or joined by `+` into `innerHTML`,

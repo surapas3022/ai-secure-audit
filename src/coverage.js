@@ -166,7 +166,7 @@ export function ruleSummaries(rulesDir = RULES_DIR) {
 
 // Common mistakes that no code rule of this kit looks for yet. Keep this list true: drop an item once a rule covers it.
 export const NOT_LOOKED_FOR = [
-  'SQL built from user input in another file, NoSQL queries or shell commands built from user input',
+  'NoSQL queries or shell commands built from user input',
   'HTML put on the page from values whose names do not look like text people type, or through other variables (XSS)',
   'redirects or server-side requests to a URL the user chose',
   'folders served as file lists',

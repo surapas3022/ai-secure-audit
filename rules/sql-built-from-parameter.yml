@@ -1,0 +1,81 @@
+rules:
+  - id: sql-built-from-parameter
+    languages: [javascript, typescript]
+    severity: WARNING
+    message: >-
+      SQL text is built from a value this function was given (a parameter), not sent apart from it. If any caller
+      passes something a person typed (a form field, a URL, a header), for example a route in another file that calls
+      this helper with req.body, that person can change the query: read every row, log in as anyone, or delete data.
+      Find where this function is called and where the value comes from; whatever you find, send the value with a
+      placeholder (db.query('... WHERE email = $1', [email]), '?' with mysql2 or sqlite, Sequelize replacements, or
+      the tagged prisma.$queryRaw), and pick names that cannot be placeholders (a column to sort by) from a fixed list.
+    metadata:
+      category: code
+      # Shown in the report's list of what the code rules look for.
+      summary: 'SQL text built from a function parameter, for db helpers called from another file (same calls as above)'
+      cwe: "CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')"
+      asvs: 'OWASP ASVS 5.0 V1.2.4 (parameterized queries)'
+      confidence: MEDIUM
+      # When sql-built-from-request reports the same line, that finding (high, the request is visible) is enough.
+      suppressed-on-same-line-by: sql-built-from-request
+      limitations: >-
+        Does not know what callers pass: a parameter that only ever holds a value from the code itself (a tenant id
+        from a signed token, a value checked against a fixed list) is reported too, so read the callers before
+        changing anything. Only a parameter used as a value is matched (in quotes, or after =, <, >, IN (, ORDER BY,
+        LIMIT, OFFSET); a parameter that is a whole SQL fragment or a property of an object parameter (fields[k]) is
+        missed.
+    mode: taint
+    pattern-sources:
+      # A parameter put into SQL text where it is a value: inside quotes ('${email}', "= '" + name), or right after
+      # =, <, >, IN (, ORDER BY, LIMIT or OFFSET. A parameter that is a whole fragment (WHERE ${where}) or the whole
+      # SQL text (query(text, params)) is left out: in real code those are fixed text the caller wrote.
+      - patterns:
+          - pattern-either:
+              - patterns:
+                  - pattern: "`...${$X}...`"
+                  - pattern-regex: (?i)(['%]|(=|<>|!=|<|>|\bin\s*\(|\border\s+by|\blimit|\boffset)\s*)\$\{\s*[\w$.\[\]'"]+\s*\}
+              - patterns:
+                  - pattern: '"$S" + $X'
+                  - metavariable-regex:
+                      metavariable: $S
+                      regex: (?is).*(['%]|(=|<>|!=|<|>|\bin\s*\(|\border\s+by|\blimit|\boffset)\s*)$
+          # $X is a parameter of the function around it. req.body.x is a property, not a parameter: request values are
+          # sql-built-from-request's.
+          - pattern-either:
+              - pattern-inside: |
+                  function $F(..., $X, ...) { ... }
+              - pattern-inside: |
+                  function (..., $X, ...) { ... }
+    # No sanitizers: a source is a parameter written straight into the SQL text, so Number(x), escape(x) or a
+    # placeholder list are not sources in the first place.
+    pattern-sinks:
+      # The first argument is the SQL text. Values passed in later arguments are safe.
+      - patterns:
+          - pattern-either:
+              - pattern: $DB.query($SQL, ...)
+              - pattern: $DB.execute($SQL, ...)
+              - pattern: $DB.raw($SQL, ...)
+          # Only receivers named like a database handle, so other objects' query() are not matched.
+          - metavariable-regex:
+              metavariable: $DB
+              regex: (?i)(.*\.)?(\w*db|database|sqlite\w*|conn|connection|pool|client|knex|sequelize|sql|tx|trx|manager|entitymanager|datasource|queryrunner|\w*repo(sitory)?)$
+          - focus-metavariable: $SQL
+      # get, all, run, exec and prepare are common names (an HTTP client's get, Map.get, RegExp.exec): only on a
+      # receiver named like a SQLite handle or statement.
+      - patterns:
+          - pattern-either:
+              - pattern: $DB.all($SQL, ...)
+              - pattern: $DB.get($SQL, ...)
+              - pattern: $DB.run($SQL, ...)
+              - pattern: $DB.exec($SQL, ...)
+              - pattern: $DB.prepare($SQL, ...)
+          - metavariable-regex:
+              metavariable: $DB
+              regex: (?i)(.*\.)?(\w*db|database|sqlite\w*|stmt|statement)$
+          - focus-metavariable: $SQL
+      - patterns:
+          - pattern-either:
+              - pattern: $P.$queryRawUnsafe($SQL, ...)
+              - pattern: $P.$executeRawUnsafe($SQL, ...)
+              - pattern: Prisma.raw($SQL)
+          - focus-metavariable: $SQL

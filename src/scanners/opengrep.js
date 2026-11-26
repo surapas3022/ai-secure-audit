@@ -68,6 +68,10 @@ export default {
     // Internal rules are never shown: they only record that something exists anywhere in the project (for example a
     // throttle registered for the whole app), and a rule with suppressed-by: <id> is dropped when that rule matched.
     const seen = new Set(results.filter((r) => r.extra?.metadata?.internal).map((r) => r.ruleId));
+    // A rule with suppressed-on-same-line-by: <id> is dropped where that rule reported the same file and line (a
+    // medium "check the callers" finding is not needed next to the high one that already sees the request).
+    const lineOf = (r) => `${rel(ctx.root, r.path)}:${r.start.line}`;
+    const reported = new Set(results.map((r) => `${r.ruleId}@${lineOf(r)}`));
     const findings = [];
     // A taint rule reports one result per path from a source to the same line (three request values in one query
     // give three results): one line is one finding.
@@ -75,6 +79,7 @@ export default {
     for (const r of results) {
       const meta = r.extra?.metadata ?? {};
       if (meta.internal || (meta['suppressed-by'] && seen.has(meta['suppressed-by']))) continue;
+      if (meta['suppressed-on-same-line-by'] && reported.has(`${meta['suppressed-on-same-line-by']}@${lineOf(r)}`)) continue;
       const ruleId = r.ruleId;
       const location = `${rel(ctx.root, r.path)}:${r.start.line}`;
       if (done.has(`${ruleId}:${location}`)) continue;
