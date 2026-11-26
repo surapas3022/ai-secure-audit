@@ -173,6 +173,8 @@ export const NOT_LOOKED_FOR = [
   'passwords stored with a fast hash such as MD5 or SHA-1',
 ];
 
+const extOf = (name) => (name.includes('.') ? name.slice(name.lastIndexOf('.')).toLowerCase() : '');
+
 function walk(dir, rel, out, limit) {
   let entries;
   try { entries = readdirSync(dir, { withFileTypes: true }); } catch { return; }
@@ -194,8 +196,7 @@ export function projectCoverage(root, { rulesDir = RULES_DIR, limit = 200_000 } 
   const compose = [];
   for (const f of files) {
     const name = basename(f);
-    const ext = name.includes('.') ? name.slice(name.lastIndexOf('.')).toLowerCase() : '';
-    const lang = BY_EXT.get(ext);
+    const lang = BY_EXT.get(extOf(name));
     if (lang) counts.set(lang, (counts.get(lang) ?? 0) + 1);
     if (LOCKFILES[name]) lockfiles.push({ file: f, ...LOCKFILES[name] });
     if (isComposeFile(name)) compose.push(f);
@@ -204,8 +205,15 @@ export function projectCoverage(root, { rulesDir = RULES_DIR, limit = 200_000 } 
     .map(([language, n]) => ({ language, files: n, code_rules: covered.has(language) }));
   // Only the rules that can match a language found here: a NestJS rule says nothing about a PHP project.
   const present = new Set(languages.filter((l) => l.code_rules).map((l) => l.language));
+  // opengrep's built-in ignore list leaves out folders named test or tests at any depth, and *.min.js files, so the
+  // code rules never read them. Files in a language with no rules are already named above.
+  const ruled = (f) => present.has(BY_EXT.get(extOf(basename(f))));
+  const code_skipped = {
+    test_folders: files.filter((f) => ruled(f) && /(?:^|\/)tests?\//.test(f)),
+    minified: files.filter((f) => ruled(f) && /\.min\.js$/i.test(f) && !/(?:^|\/)tests?\//.test(f)),
+  };
   const code_rules = rules.filter((r) => r.languages.some((l) => present.has(l))).map(({ id, summary }) => ({ id, summary }));
-  return { languages, code_rules, lockfiles, compose, unlocked: manifestsWithoutLockfile(root, files), truncated: files.length >= limit };
+  return { languages, code_rules, code_skipped, lockfiles, compose, unlocked: manifestsWithoutLockfile(root, files), truncated: files.length >= limit };
 }
 
 const list = (items) => (items.length < 2 ? items.join('') : `${items.slice(0, -1).join(', ')} and ${items.at(-1)}`);
@@ -229,6 +237,24 @@ export function coverageGaps(cov) {
       `Other mistakes were not looked for, such as ${list(NOT_LOOKED_FOR)}; "0 findings" says nothing about them. ` +
       'To review them, ask an AI assistant with the prompt in ' +
       'https://github.com/surapas3022/ai-secure-audit/blob/main/docs/ai-review-prompt.md (its results are leads to check, not findings).');
+  }
+  const skipped = cov.code_skipped ?? { test_folders: [], minified: [] };
+  const parts = [];
+  const files = (n) => `${n} ${n === 1 ? 'file' : 'files'}`;
+  if (skipped.test_folders.length) parts.push(`${files(skipped.test_folders.length)} in test or tests folders (${named(skipped.test_folders)})`);
+  if (skipped.minified.length) {
+    const n = skipped.minified.length;
+    parts.push(`${n} minified ${n === 1 ? 'file' : 'files'} (${named(skipped.minified)})`);
+  }
+  if (parts.length) {
+    const total = skipped.test_folders.length + skipped.minified.length;
+    const what = [skipped.test_folders.length && 'folders named test or tests', skipped.minified.length && '*.min.js files'].filter(Boolean);
+    const why = [
+      skipped.test_folders.length && 'Test code usually does not run as the app; if a folder named test or tests holds code that does, review it by hand.',
+      skipped.minified.length && 'A minified file does run, but it is usually a library copied in or build output whose source is elsewhere; if it is code you wrote, check the source instead.',
+    ].filter(Boolean);
+    gaps.push(`Code rules: ${parts.join(' and ')} ${total === 1 ? 'was' : 'were'} not checked by the code rules: opengrep ` +
+      `leaves ${what.join(' and ')} out on its own. ${why.join(' ')} The secret check still read these files.`);
   }
   if (cov.unlocked?.length) {
     gaps.push(`${NO_LIBRARY_CHECK} no lockfile (the file that records exact library versions) was found for ${named(cov.unlocked)}, ` +

@@ -196,3 +196,54 @@ test('coverage: Solidity files are named as not checked instead of passing in si
     rmSync(root, { recursive: true, force: true });
   }
 });
+
+test('coverage: code in test or tests folders and minified files is named as not checked by the code rules', () => {
+  const root = project({
+    'src/server.js': '', 'src/a.test.js': '', 'spec/b.js': '', '__tests__/c.js': '',
+    'test/e2e.js': '', 'tests/unit.ts': '', 'packages/api/test/fixtures/x.js': '', 'public/lib/app.min.js': '', 'test/lib/jquery.min.js': '',
+    'test/data.json': '{}', 'tests/helper.py': '', 'package-lock.json': '{}',
+  });
+  try {
+    const cov = projectCoverage(root);
+    assert.deepEqual(cov.code_skipped, {
+      test_folders: ['packages/api/test/fixtures/x.js', 'test/e2e.js', 'test/lib/jquery.min.js', 'tests/unit.ts'],
+      minified: ['public/lib/app.min.js'],
+    });
+    const gap = coverageGaps(cov).find((g) => g.startsWith('Code rules: 4 files in test or tests folders'));
+    assert.ok(gap, 'a test-folder gap');
+    assert.match(gap, /packages\/api\/test\/fixtures\/x\.js, test\/e2e\.js, test\/lib\/jquery\.min\.js, tests\/unit\.ts/);
+    assert.match(gap, /1 minified file \(public\/lib\/app\.min\.js\)/);
+    assert.match(gap, /review it by hand/);
+    assert.match(gap, /A minified file does run/);
+    assert.match(gap, /The secret check still read these files\./);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('coverage: no test folders and no minified files gives no such gap', () => {
+  const root = project({ 'src/server.js': '', 'src/a.test.js': '', '__tests__/c.js': '', 'package-lock.json': '{}' });
+  try {
+    const cov = projectCoverage(root);
+    assert.deepEqual(cov.code_skipped, { test_folders: [], minified: [] });
+    assert.ok(!coverageGaps(cov).some((g) => /test or tests folders|minified/.test(g)));
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('coverage: only test folders, or only minified files, says just that', () => {
+  const a = project({ 'tests/a.js': '', 'package-lock.json': '{}' });
+  const b = project({ 'app.min.js': '', 'server.js': '', 'package-lock.json': '{}' });
+  try {
+    const ga = coverageGaps(projectCoverage(a)).find((g) => g.includes('test or tests'));
+    assert.match(ga, /^Code rules: 1 file in test or tests folders \(tests\/a\.js\) was not checked by the code rules/);
+    assert.doesNotMatch(ga, /minified/);
+    const gb = coverageGaps(projectCoverage(b)).find((g) => g.includes('minified'));
+    assert.match(gb, /^Code rules: 1 minified file \(app\.min\.js\) was not checked by the code rules/);
+    assert.doesNotMatch(gb, /Test code/);
+  } finally {
+    rmSync(a, { recursive: true, force: true });
+    rmSync(b, { recursive: true, force: true });
+  }
+});

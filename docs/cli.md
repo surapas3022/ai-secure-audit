@@ -120,6 +120,10 @@ Options: `--report simple` (also write `report-simple.md`, a short to-do list in
   rule looks for yet (SQL or shell commands built from user input, eval, XSS, open redirects and server-side requests,
   folders served as file lists, fast password hashes), so "code rules: yes" is not read as "the code was checked".
   Solidity, Scala, Elixir and Lua files are counted too and named as having no rules.
+  opengrep's built-in ignore list leaves out folders named `test` or `tests` at any depth and `*.min.js` files, so
+  the code rules never read them: `coverage.code_skipped` lists those files (only languages that have rules) and
+  the report names them as not checked by the code rules. gitleaks still reads them for secrets. On Juice Shop the
+  list matched the files opengrep reported as ignored, 137 of 137.
   Docker Compose files (`compose.yaml`, `docker-compose.yml` and variants such as `docker-compose.prod.yml`) are
   listed in `coverage.compose` and named as a gap, because trivy reads Dockerfiles but has no Compose scanner: a
   Compose file with `privileged: true` or a mounted `docker.sock` gives no finding at all.
