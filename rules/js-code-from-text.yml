@@ -1,0 +1,81 @@
+rules:
+  - id: js-code-from-text
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: >-
+      Text is run as JavaScript code here (eval, new Function, setTimeout or setInterval with a string, or Node's vm).
+      If any part of that text can come from a person (a form, a URL, a saved profile, a file they upload), they can
+      run their own code on your server or in other people's browsers: read secrets and files, change data, or take
+      over the machine. Do not run text as code: parse data with JSON.parse, compute with ordinary functions, and pass
+      a function to setTimeout instead of a string. Node's vm module is not a security boundary (its own docs say so),
+      so moving eval into vm does not make it safe.
+    metadata:
+      category: code
+      # Shown in the report's list of what the code rules look for.
+      summary: 'text run as code (eval, new Function, setTimeout with a string, Node vm)'
+      cwe: "CWE-95: Improper Neutralization of Directives in Dynamically Evaluated Code ('Eval Injection')"
+      asvs: 'OWASP ASVS 5.0 V1.3.2 (no eval or dynamic code execution)'
+      confidence: HIGH
+      limitations: >-
+        Reports every eval of something that is not a fixed string, whether or not a person can reach it (a server
+        that evals a sum it made itself is reported too: replace it anyway). vm code that is a fixed string is
+        reported only when it calls an eval-like function itself. Does not see code run through other libraries
+        (a template engine compiling user templates, a sandbox package).
+    pattern-either:
+      # 1. eval of anything but a string literal.
+      - patterns:
+          - pattern: eval($X)
+          - pattern-not: eval("...")
+      - patterns:
+          - pattern: $W.eval($X, ...)
+          - pattern-not: $W.eval("...", ...)
+          # Only the global eval: redisClient.eval(script, ...) runs Lua on Redis, not JavaScript.
+          - metavariable-regex:
+              metavariable: $W
+              regex: ^(window|globalThis|global|self|win)$
+      # 2. new Function / Function whose body (the last argument) is not a string literal.
+      - patterns:
+          - pattern-either:
+              - pattern: new Function(..., $BODY)
+              - pattern: Function(..., $BODY)
+          - pattern-not: new Function(..., "...")
+          - pattern-not: Function(..., "...")
+      # 3. setTimeout or setInterval given a string that is built from data. The first argument itself must be the
+      # string: a function that builds strings inside it is not matched.
+      - patterns:
+          - pattern-either:
+              - pattern: $TIMER("..." + $Y, ...)
+              - pattern: $TIMER($Y + "...", ...)
+              - pattern: $TIMER(`...${$Y}...`, ...)
+              - pattern: $W.$TIMER("..." + $Y, ...)
+              - pattern: $W.$TIMER($Y + "...", ...)
+              - pattern: $W.$TIMER(`...${$Y}...`, ...)
+          - metavariable-regex:
+              metavariable: $TIMER
+              regex: ^(setTimeout|setInterval)$
+      # 4. Node vm: code that is not a fixed string ...
+      - patterns:
+          - pattern-either:
+              - pattern: $VM.runInContext($CODE, ...)
+              - pattern: $VM.runInNewContext($CODE, ...)
+              - pattern: $VM.runInThisContext($CODE, ...)
+              - pattern: $VM.compileFunction($CODE, ...)
+              - pattern: new $VM.Script($CODE, ...)
+          - metavariable-regex:
+              metavariable: $VM
+              regex: (?i)^\w*vm$
+          - pattern-not: $VM.$RUN("...", ...)
+          - pattern-not: new $VM.Script("...", ...)
+      # ... or fixed code that evals something itself (vm.runInContext('safeEval(data)', sandbox)).
+      - patterns:
+          - pattern-either:
+              - pattern: $VM.runInContext("$CODE", ...)
+              - pattern: $VM.runInNewContext("$CODE", ...)
+              - pattern: $VM.runInThisContext("$CODE", ...)
+              - pattern: new $VM.Script("$CODE", ...)
+          - metavariable-regex:
+              metavariable: $VM
+              regex: (?i)^\w*vm$
+          - metavariable-regex:
+              metavariable: $CODE
+              regex: (?i).*(eval|Function)\s*\(

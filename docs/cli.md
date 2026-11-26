@@ -101,6 +101,15 @@ Options: `--report simple` (also write `report-simple.md`, a short to-do list in
   **Missed or wrong:** text kept under other field names, a value passed through other variables, and HTML built in
   `.vue`, `.svelte` or template files. Known false findings: a boolean flag named like text (`aria-pressed="${c.text}"`),
   labels the app wrote in its own array, and tag-like text that is not HTML (an AI prompt with `<doc title="...">`).
+- `js-code-from-text` (high, not released yet): text run as JavaScript code. `eval` (or `window`/`globalThis`
+  `.eval`) of anything but a string literal; `new Function` or `Function` whose body is not a string literal;
+  `setTimeout` or `setInterval` whose first argument is a string built with `+` or a template; Node `vm`
+  (`runInContext`, `runInNewContext`, `runInThisContext`, `compileFunction`, `new vm.Script`) with code that is not a
+  fixed string, or a fixed string that calls an eval-like function itself (`vm.runInContext('safeEval(data)', ...)`).
+  Not matched: string literals, functions passed to timers, `vm.Script#runInContext(context)`, other objects'
+  `.eval` (Redis runs Lua). Reported whether or not a person can reach the text.
+  **Missed:** expression libraries with their own eval (`mathjs.eval` in old mathjs could run code: osv-scanner finds
+  that version when there is a lockfile), code run through template engines or sandbox packages.
 - **What was not checked.** The CLI counts source files by extension and lists lockfiles (skipping installed and
   generated folders), then writes `coverage` into `findings.json`: each language with its file count and whether this
   kit has code rules for it (taken from the `languages:` of the rule files), the rules that apply to those languages
