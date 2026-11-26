@@ -247,3 +247,24 @@ test('coverage: only test folders, or only minified files, says just that', () =
     rmSync(b, { recursive: true, force: true });
   }
 });
+
+test('coverage: files the code checker could not read, read in part, or stopped on are named', () => {
+  const cov = { languages: [], lockfiles: [], code_read: {
+    not_read: [{ file: 'src/f.js', line: 3 }, { file: 'src/huge.ts', line: null }],
+    read_in_part: [{ file: 'src/user.service.ts', lines: [14, 30] }],
+    stopped: [{ file: 'public/big.js', rules: ['js-html-from-user-text'] }],
+  } };
+  const gaps = coverageGaps(cov);
+  const notRead = gaps.find((g) => g.startsWith('Code rules: 2 files could not be read'));
+  assert.ok(notRead, JSON.stringify(gaps));
+  assert.match(notRead, /src\/f\.js \(syntax error at line 3\), src\/huge\.ts/);
+  assert.match(notRead, /were not checked by the code rules at all/);
+  const part = gaps.find((g) => g.startsWith('Code rules: 1 file was read only in part'));
+  assert.match(part, /src\/user\.service\.ts \(lines 14, 30\)/);
+  assert.match(part, /a finding there can be missing/);
+  const stopped = gaps.find((g) => g.startsWith('Code rules: the check stopped on 1 file'));
+  assert.match(stopped, /public\/big\.js \(js-html-from-user-text\)/);
+  for (const g of [notRead, part, stopped]) assert.match(g, /full list in findings\.json under coverage\.code_read/);
+  assert.deepEqual(coverageGaps({ languages: [], lockfiles: [], code_read: { not_read: [], read_in_part: [], stopped: [] } }), []);
+  assert.deepEqual(coverageGaps({ languages: [], lockfiles: [] }), []);
+});

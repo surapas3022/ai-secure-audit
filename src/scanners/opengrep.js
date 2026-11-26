@@ -30,6 +30,38 @@ export default {
 
   okExit: [0],
 
+  // Files opengrep could not check fully, from its errors list: a syntax error means the whole file was skipped, a
+  // partial parse means some lines were skipped (a finding there can be missing), a timeout means a rule gave up on
+  // the file. Errors with no file (about a rule) are left out: those make the run fail instead.
+  codeRead(json, ctx) {
+    const notRead = new Map();
+    const inPart = new Map();
+    const stopped = new Map();
+    for (const e of json?.errors ?? []) {
+      if (!e?.path) continue;
+      const file = rel(ctx.root, e.path);
+      const kind = Array.isArray(e.type) ? e.type[0] : e.type;
+      const lines = (e.spans ?? []).map((s) => s?.start?.line).filter((n) => Number.isInteger(n));
+      // A syntax error that stops the whole file has no spans; its message names the line: "...at line <path>:7:".
+      const inMessage = Number(String(e.message ?? '').split(`${e.path}:`)[1]?.match(/^(\d+):/)?.[1]);
+      if (!lines.length && Number.isInteger(inMessage) && inMessage > 0) lines.push(inMessage);
+      if (kind === 'PartialParsing') {
+        inPart.set(file, [...new Set([...(inPart.get(file) ?? []), ...lines])].sort((a, b) => a - b));
+      } else if (kind === 'Timeout') {
+        const rule = String(e.rule_id ?? '').split('.').at(-1);
+        stopped.set(file, [...new Set([...(stopped.get(file) ?? []), ...(rule ? [rule] : [])])].sort());
+      } else if (!notRead.has(file)) {
+        notRead.set(file, lines[0] ?? null);
+      }
+    }
+    const sorted = (m) => [...m].sort((a, b) => (a[0] < b[0] ? -1 : 1));
+    return {
+      not_read: sorted(notRead).map(([file, line]) => ({ file, line })),
+      read_in_part: sorted(inPart).filter(([file]) => !notRead.has(file)).map(([file, lines]) => ({ file, lines })),
+      stopped: sorted(stopped).map(([file, rules]) => ({ file, rules })),
+    };
+  },
+
   parse(json, ctx) {
     // opengrep prefixes the rule id with the config path, joined by dots; our rule ids have no dots.
     const results = (json?.results ?? []).map((r) => ({ ...r, ruleId: r.check_id.split('.').at(-1) }));

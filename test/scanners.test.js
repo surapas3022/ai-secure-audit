@@ -116,3 +116,29 @@ test('opengrep: several taint paths to one line are one finding', () => {
   const got = opengrep.parse({ results: [r(5, 1), r(5, 1), r(5, 9), r(7, 1)] }, ctx);
   assert.deepEqual(got.map((f) => f.evidence[0].location), ['a.ts:5', 'a.ts:7']);
 });
+
+test('opengrep: files it could not read, read in part, or stopped on are listed for the report', () => {
+  const at = (p, line) => ({ file: `/tmp/asa-fixture/${p}`, start: { line, col: 1, offset: 0 }, end: { line, col: 5, offset: 4 } });
+  const json = { results: [], errors: [
+    { code: 3, level: 'warn', type: 'Syntax error', path: '/tmp/asa-fixture/src/f.js', spans: [at('src/f.js', 3)], message: 'Syntax error at line ...' },
+    { code: 3, level: 'warn', type: ['PartialParsing', [at('src/user.service.ts', 14)]], path: '/tmp/asa-fixture/src/user.service.ts',
+      spans: [at('src/user.service.ts', 14), at('src/user.service.ts', 30)], message: 'Syntax error at line ...' },
+    { code: 3, level: 'warn', type: ['PartialParsing', [at('src/user.service.ts', 14)]], path: '/tmp/asa-fixture/src/user.service.ts',
+      spans: [at('src/user.service.ts', 14)], message: 'again' },
+    { code: 2, level: 'warn', type: 'Timeout', rule_id: 'Users.me.rules.js-html-from-user-text', path: '/tmp/asa-fixture/public/big.js', message: 'Timeout when running ...' },
+    { code: 2, level: 'warn', type: 'Timeout', rule_id: 'Users.me.rules.sql-built-from-request', path: '/tmp/asa-fixture/public/big.js', message: 'Timeout when running ...' },
+    { code: 2, level: 'error', type: 'Out of memory', path: '/tmp/asa-fixture/src/huge.ts', message: 'oom' },
+    // A file with a syntax error is not read at all, even if a partial parse of it is reported too.
+    { code: 3, level: 'warn', type: ['PartialParsing', []], path: '/tmp/asa-fixture/src/f.js', spans: [at('src/f.js', 9)], message: 'x' },
+    // A real syntax error has no spans: the line is only in the message.
+    { code: 3, level: 'warn', type: 'Syntax error', path: '/tmp/asa-fixture/src/snippet.ts', message: 'Syntax error at line /tmp/asa-fixture/src/snippet.ts:7:\n `x` was unexpected' },
+    { code: 2, level: 'warn', type: 'Rule parse error', message: 'no path: about a rule, not a file' },
+  ] };
+  assert.deepEqual(opengrep.codeRead(json, ctx), {
+    not_read: [{ file: 'src/f.js', line: 3 }, { file: 'src/huge.ts', line: null }, { file: 'src/snippet.ts', line: 7 }],
+    read_in_part: [{ file: 'src/user.service.ts', lines: [14, 30] }],
+    stopped: [{ file: 'public/big.js', rules: ['js-html-from-user-text', 'sql-built-from-request'] }],
+  });
+  assert.deepEqual(opengrep.codeRead({ results: [] }, ctx), { not_read: [], read_in_part: [], stopped: [] });
+  assert.deepEqual(opengrep.codeRead(null, ctx), { not_read: [], read_in_part: [], stopped: [] });
+});

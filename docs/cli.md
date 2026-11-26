@@ -124,6 +124,11 @@ Options: `--report simple` (also write `report-simple.md`, a short to-do list in
   the code rules never read them: `coverage.code_skipped` lists those files (only languages that have rules) and
   the report names them as not checked by the code rules. gitleaks still reads them for secrets. On Juice Shop the
   list matched the files opengrep reported as ignored, 137 of 137.
+  Files opengrep could not check fully are read from its `errors` list into `coverage.code_read`: `not_read`
+  (a syntax error: the whole file was skipped), `read_in_part` (a partial parse: the code around the listed lines
+  was skipped, and a finding there can be missing; tested: an `eval` next to a merge-conflict marker was not found)
+  and `stopped` (a rule timed out on the file). Each is a gap line in the report, with the full list in
+  `findings.json`. On Juice Shop: 16 files not read and 15 read in part, the same counts opengrep gives.
   Docker Compose files (`compose.yaml`, `docker-compose.yml` and variants such as `docker-compose.prod.yml`) are
   listed in `coverage.compose` and named as a gap, because trivy reads Dockerfiles but has no Compose scanner: a
   Compose file with `privileged: true` or a mounted `docker.sock` gives no finding at all.

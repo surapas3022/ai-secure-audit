@@ -256,6 +256,27 @@ export function coverageGaps(cov) {
     gaps.push(`Code rules: ${parts.join(' and ')} ${total === 1 ? 'was' : 'were'} not checked by the code rules: opengrep ` +
       `leaves ${what.join(' and ')} out on its own. ${why.join(' ')} The secret check still read these files.`);
   }
+  const read = cov.code_read ?? { not_read: [], read_in_part: [], stopped: [] };
+  const n = (k, one, many) => `${k} ${k === 1 ? one : many}`;
+  if (read.not_read.length) {
+    const list = named(read.not_read.map((x) => (x.line ? `${x.file} (syntax error at line ${x.line})` : x.file)));
+    gaps.push(`Code rules: ${n(read.not_read.length, 'file', 'files')} could not be read by the code checker (${list}), so ` +
+      `${read.not_read.length === 1 ? 'it was' : 'they were'} not checked by the code rules at all. This happens with syntax ` +
+      'the checker does not know, or a file that is only part of a program. If one of them is app code, review it by hand ' +
+      '(full list in findings.json under coverage.code_read).');
+  }
+  if (read.read_in_part.length) {
+    const list = named(read.read_in_part.map((x) => (x.lines.length ? `${x.file} (${x.lines.length === 1 ? 'line' : 'lines'} ${x.lines.join(', ')})` : x.file)));
+    gaps.push(`Code rules: ${n(read.read_in_part.length, 'file was', 'files were')} read only in part (${list}): the code ` +
+      'checker skipped the code around those lines, so a finding there can be missing. Review those parts by hand ' +
+      '(full list in findings.json under coverage.code_read).');
+  }
+  if (read.stopped.length) {
+    const list = named(read.stopped.map((x) => (x.rules.length ? `${x.file} (${x.rules.join(', ')})` : x.file)));
+    gaps.push(`Code rules: the check stopped on ${n(read.stopped.length, 'file', 'files')} before it finished (${list}), ` +
+      'because a rule took too long; those rules did not finish on that file. Large or generated files cause this ' +
+      '(full list in findings.json under coverage.code_read).');
+  }
   if (cov.unlocked?.length) {
     gaps.push(`${NO_LIBRARY_CHECK} no lockfile (the file that records exact library versions) was found for ${named(cov.unlocked)}, ` +
       'so the libraries listed there were not looked at; "0 findings" says nothing about them. Create the lockfile with your ' +

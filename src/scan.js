@@ -59,6 +59,7 @@ export async function scan(target, { log = () => {}, version }) {
   const runs = [];
   let findings = [];
   let librariesRead = null; // stays null when the library scanner did not run: the report says that already
+  let codeRead = null; // files the code checker could not read fully; null when it did not run
   for (const s of BASIC_SCANNERS) {
     const run = { id: s.id, version: tools[s.id].version, license: tools[s.id].license, status: 'ok' };
     runs.push(run);
@@ -84,6 +85,7 @@ export async function scan(target, { log = () => {}, version }) {
         json = pass.name ? [...(json ?? []), ...(data ?? []).map((item) => ({ ...item, pass: pass.name }))] : data;
       }
       if (s.filesRead) librariesRead = new Set(s.filesRead(json, ctx));
+      if (s.codeRead) codeRead = s.codeRead(json, ctx);
       const found = s.parse(json, ctx).map((f) => ({ ...f, source: { ...f.source, tool_version: run.version } }));
       run.findings = found.length;
       findings = findings.concat(found);
@@ -94,6 +96,7 @@ export async function scan(target, { log = () => {}, version }) {
   }
 
   const coverage = projectCoverage(root);
+  if (codeRead) coverage.code_read = codeRead;
   coverage.unread = librariesRead ? coverage.lockfiles.map((l) => l.file).filter((f) => !librariesRead.has(f)) : [];
   const result = {
     generator: `ai-secure-audit ${version}`,
