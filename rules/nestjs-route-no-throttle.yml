@@ -9,6 +9,8 @@ rules:
       low limit, and lock out after repeated failures. If a limit is set somewhere this rule cannot see (the reverse
       proxy), confirm it actually covers this route.
     metadata:
+      # Shown in the report's list of what the code rules look for.
+      summary: 'sign-in, sign-up, join or code routes with no throttle (NestJS)'
       category: code
       cwe: 'CWE-307: Improper Restriction of Excessive Authentication Attempts'
       asvs: 'OWASP ASVS 5.0 V6.3.1 (brute force), V2.4.1 (anti-automation)'

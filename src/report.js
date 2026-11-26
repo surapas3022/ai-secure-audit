@@ -125,6 +125,7 @@ export function reportMarkdown(result, date) {
   lines.push('');
   lines.push('- Whether one user can open or change another user\'s data (for example by changing an id in the URL)');
   lines.push('- Business rules: prices, coupons, approvals, payments');
+  lines.push('- How sign-in, sign-up and password reset work (for example a role the sign-up form can set, a reset question anyone can guess, or a login that skips a check)');
   lines.push('- Database rules such as Supabase row-level security or Firebase security rules (planned)');
   lines.push('- Anything about the live server or website');
   for (const g of result.coverage?.gaps ?? []) lines.push(`- ${g}`);
@@ -154,7 +155,7 @@ export function consoleSummary(result, outRel) {
     '- A finding marked not_committed can be moved out of the code without rotating, unless the key was shared or pasted somewhere else.',
     '- Findings of type code come from pattern rules and can be wrong. Read the code at that location and tell the user',
     '  if a limit or check exists somewhere the rule cannot see (another file, the proxy) before changing anything.',
-    '- Not checked: whether one user can reach another user\'s data, and business rules. Say so.',
+    '- Not checked: whether one user can reach another user\'s data, business rules, and how sign-in, sign-up and password reset work. Say so.',
     ...(result.coverage?.gaps ?? []).map((g) => `- ${g} Tell the user.`),
     ...(result.notices ?? []).map((n) => `- ${n.message} Tell the user, and ask before editing the file.`),
     ...(failed.length ? ['- Some tools did not run (see NOT RUN above). Tell the user the check is incomplete.'] : []),

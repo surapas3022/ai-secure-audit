@@ -81,9 +81,14 @@ Options: `--report simple` (also write `report-simple.md`, a short to-do list in
   and stores named like sessions, tokens, admins or keys; a lookup stored in a variable and tested later is missed.
 - **What was not checked.** The CLI counts source files by extension and lists lockfiles (skipping installed and
   generated folders), then writes `coverage` into `findings.json`: each language with its file count and whether this
-  kit has code rules for it (taken from the `languages:` of the rule files), and each lockfile with whether its
+  kit has code rules for it (taken from the `languages:` of the rule files), the rules that apply to those languages
+  (`coverage.code_rules`, each with the `metadata.summary` of its rule file), and each lockfile with whether its
   ecosystem has been tested with known answers. Gaps go into the report under "What this check could not see" and
   into the instructions printed for the AI, so "0 findings" for a PHP or Go project is not read as "checked".
+  For JavaScript or TypeScript the gap says how many rules ran, what each looks for, and common mistakes that no
+  rule looks for yet (SQL or shell commands built from user input, eval, XSS, open redirects and server-side requests,
+  folders served as file lists, fast password hashes), so "code rules: yes" is not read as "the code was checked".
+  Solidity, Scala, Elixir and Lua files are counted too and named as having no rules.
   Docker Compose files (`compose.yaml`, `docker-compose.yml` and variants such as `docker-compose.prod.yml`) are
   listed in `coverage.compose` and named as a gap, because trivy reads Dockerfiles but has no Compose scanner: a
   Compose file with `privileged: true` or a mounted `docker.sock` gives no finding at all.
@@ -123,7 +128,7 @@ For the AI assistant reading this:
 - Ask before changing code. Fix one finding at a time; run `npx ai-secure-audit retest` after.
 - Use each finding's fix field. A key that is in git or was deployed must be rotated at the provider: deleting it from the code is not enough.
 - A finding marked not_committed can be moved out of the code without rotating, unless the key was shared or pasted somewhere else.
-- Not checked: whether one user can reach another user's data, and business rules. Say so.
+- Not checked: whether one user can reach another user's data, business rules, and how sign-in, sign-up and password reset work. Say so.
 ```
 
 The block is how the kit's rules reach assistants that have no skills installed.

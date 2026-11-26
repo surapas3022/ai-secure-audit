@@ -9,6 +9,8 @@ rules:
       or an object made with Object.create(null), check with Object.hasOwn first, or look up a hash of the token
       (which also keeps raw tokens out of storage).
     metadata:
+      # Shown in the report's list of what the code rules look for.
+      summary: 'session, token or admin checks that look a request value up in a plain object (Express)'
       category: code
       cwe: 'CWE-287: Improper Authentication'
       asvs: 'OWASP ASVS 5.0 V7.2.1 (session tokens verified by a trusted back end)'

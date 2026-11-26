@@ -104,7 +104,7 @@ export async function scan(target, { log = () => {}, version }) {
     // About this tool's own output, not a weakness of the app: kept apart from findings so it is never rated.
     notices: dockerignoreNotices(root),
     notes: [
-      'Not checked by this tool: whether one user can reach another user\'s data, business rules, and anything running on a server.',
+      'Not checked by this tool: whether one user can reach another user\'s data, business rules, how sign-in, sign-up and password reset work, and anything running on a server.',
       'Code rules (category code) are this kit\'s own opengrep rules. They can be wrong: check the location before changing code.',
       'Config files are checked by trivy: Dockerfiles, Kubernetes, Helm, Terraform, CloudFormation, Azure ARM and Ansible files. ' +
         'trivy does not read Docker Compose files; coverage.gaps names any that were not checked.',

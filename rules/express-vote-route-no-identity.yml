@@ -9,6 +9,8 @@ rules:
       identity on the server, and add a per-IP limit. Remembering "already voted" in the browser (localStorage, a
       cookie the server does not check) does not stop a script.
     metadata:
+      # Shown in the report's list of what the code rules look for.
+      summary: 'vote, like or rating routes that never check who sends them (Express)'
       category: code
       cwe: 'CWE-799: Improper Control of Interaction Frequency'
       asvs: 'OWASP ASVS 5.0 V2.4.1 (anti-automation)'

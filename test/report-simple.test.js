@@ -53,3 +53,13 @@ test('same library with several advisories becomes one item with the count and e
   assert.match(r, /2\.0\.0\. Also: Upgrade multer to 2\.1\.0\./);
   assert.match(r, /\*\*1 thing to fix/);
 });
+
+test('both reports and the text for the AI name sign-in, sign-up and password reset as not checked', async () => {
+  const { reportMarkdown, consoleSummary } = await import('../src/report.js');
+  const result = { generator: 'ai-secure-audit 0', target: { git: false }, tools: [], notices: [], notes: [], findings: [], coverage: { gaps: [] } };
+  const simple = reportSimple(result, '2026-01-01');
+  assert.match(simple.slice(simple.indexOf('## What was not checked')), /signing in, signing up and resetting a password/);
+  const full = reportMarkdown(result, '2026-01-01');
+  assert.match(full.slice(full.indexOf('## What this check could not see')), /sign-in, sign-up and password reset/);
+  assert.match(consoleSummary(result, '.audit/out'), /Not checked: .*sign-in, sign-up and password reset/);
+});

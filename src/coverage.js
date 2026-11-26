@@ -23,6 +23,11 @@ const LANGUAGES = {
   cpp: ['.cpp', '.cc', '.cxx', '.hpp', '.hh'],
   dart: ['.dart'],
   swift: ['.swift'],
+  scala: ['.scala'],
+  elixir: ['.ex', '.exs'],
+  lua: ['.lua'],
+  // Smart contracts: a language this kit does not read must still be named, or its files look checked.
+  solidity: ['.sol'],
   // Single-file components: the JavaScript rules do not read the <script> block inside them.
   vue: ['.vue'],
   svelte: ['.svelte'],
@@ -131,7 +136,9 @@ const named = (files) => `${files.slice(0, 5).join(', ')}${files.length > 5 ? ` 
 export const NO_LIBRARY_CHECK = 'Libraries not checked:';
 
 // Languages the kit's own code rules read, taken from the rule files so the list cannot fall behind them.
-export function ruleLanguages(rulesDir = fileURLToPath(new URL('../rules/', import.meta.url))) {
+const RULES_DIR = fileURLToPath(new URL('../rules/', import.meta.url));
+
+export function ruleLanguages(rulesDir = RULES_DIR) {
   const langs = new Set();
   for (const f of readdirSync(rulesDir).filter((n) => /\.ya?ml$/.test(n)).sort()) {
     for (const m of readFileSync(join(rulesDir, f), 'utf8').matchAll(/languages:\s*\[([^\]]*)\]/g)) {
@@ -140,6 +147,32 @@ export function ruleLanguages(rulesDir = fileURLToPath(new URL('../rules/', impo
   }
   return langs;
 }
+
+// The rules a user sees findings from, with the one-line summary the report lists. Helper rules marked
+// `internal: true` only filter other findings, so they are left out.
+export function ruleSummaries(rulesDir = RULES_DIR) {
+  const rules = [];
+  for (const f of readdirSync(rulesDir).filter((n) => /\.ya?ml$/.test(n)).sort()) {
+    for (const block of readFileSync(join(rulesDir, f), 'utf8').split(/^ {2}- id:/m).slice(1)) {
+      if (/^\s+internal:\s*true\b/m.test(block)) continue;
+      const id = block.slice(0, block.indexOf('\n')).trim();
+      const languages = (/languages:\s*\[([^\]]*)\]/.exec(block)?.[1] ?? '').split(',').map((l) => l.trim()).filter(Boolean);
+      const summary = /^\s+summary:\s*'([^']*)'/m.exec(block)?.[1] ?? /^\s+summary:\s*"([^"]*)"/m.exec(block)?.[1] ?? null;
+      rules.push({ id, languages, summary });
+    }
+  }
+  return rules;
+}
+
+// Common mistakes that no code rule of this kit looks for yet. Keep this list true: drop an item once a rule covers it.
+export const NOT_LOOKED_FOR = [
+  'SQL, database queries or shell commands built from user input',
+  'eval or similar running text the user sent',
+  'HTML put on the page without escaping (XSS)',
+  'redirects or server-side requests to a URL the user chose',
+  'folders served as file lists',
+  'passwords stored with a fast hash such as MD5 or SHA-1',
+];
 
 function walk(dir, rel, out, limit) {
   let entries;
@@ -152,10 +185,11 @@ function walk(dir, rel, out, limit) {
   }
 }
 
-export function projectCoverage(root, { rulesDir, limit = 200_000 } = {}) {
+export function projectCoverage(root, { rulesDir = RULES_DIR, limit = 200_000 } = {}) {
   const files = [];
   walk(root, '', files, limit);
   const covered = ruleLanguages(rulesDir);
+  const rules = ruleSummaries(rulesDir);
   const counts = new Map();
   const lockfiles = [];
   const compose = [];
@@ -169,8 +203,13 @@ export function projectCoverage(root, { rulesDir, limit = 200_000 } = {}) {
   }
   const languages = [...counts].sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1))
     .map(([language, n]) => ({ language, files: n, code_rules: covered.has(language) }));
-  return { languages, lockfiles, compose, unlocked: manifestsWithoutLockfile(root, files), truncated: files.length >= limit };
+  // Only the rules that can match a language found here: a NestJS rule says nothing about a PHP project.
+  const present = new Set(languages.filter((l) => l.code_rules).map((l) => l.language));
+  const code_rules = rules.filter((r) => r.languages.some((l) => present.has(l))).map(({ id, summary }) => ({ id, summary }));
+  return { languages, code_rules, lockfiles, compose, unlocked: manifestsWithoutLockfile(root, files), truncated: files.length >= limit };
 }
+
+const list = (items) => (items.length < 2 ? items.join('') : `${items.slice(0, -1).join(', ')} and ${items.at(-1)}`);
 
 // Plain sentences for the report and for the AI assistant. Empty when everything found is covered.
 export function coverageGaps(cov) {
@@ -181,6 +220,16 @@ export function coverageGaps(cov) {
       'Code in these languages was not checked for mistakes; "0 findings" says nothing about it. To review it, ask an ' +
       'AI assistant with the prompt in https://github.com/surapas3022/ai-secure-audit/blob/main/docs/ai-review-prompt.md ' +
       '(its results are leads to check, not findings).');
+  }
+  // Languages that do have rules: say how few, so "code rules: yes" is not read as "the code was checked".
+  const withRules = cov.languages.filter((l) => l.code_rules).map((l) => l.language);
+  if (withRules.length && cov.code_rules) {
+    const n = cov.code_rules.length;
+    gaps.push(`Code rules: ${list(withRules)} code was checked with only ${n} rule${n === 1 ? '' : 's'} from this kit` +
+      (n ? `: ${cov.code_rules.map((r) => r.summary ?? r.id).join('; ')}` : '') + '. ' +
+      `Other mistakes were not looked for, such as ${list(NOT_LOOKED_FOR)}; "0 findings" says nothing about them. ` +
+      'To review them, ask an AI assistant with the prompt in ' +
+      'https://github.com/surapas3022/ai-secure-audit/blob/main/docs/ai-review-prompt.md (its results are leads to check, not findings).');
   }
   if (cov.unlocked?.length) {
     gaps.push(`${NO_LIBRARY_CHECK} no lockfile (the file that records exact library versions) was found for ${named(cov.unlocked)}, ` +

@@ -104,6 +104,7 @@ export function reportSimple(result, date) {
   lines.push('These tools cannot see the following, so "nothing found" does not cover them:', '');
   lines.push('- Whether one user can open or change another user\'s data');
   lines.push('- Rules of your business: prices, coupons, payments, approvals');
+  lines.push('- How signing in, signing up and resetting a password work, for example whether someone can make themselves an admin when signing up, or guess the answer to a reset question');
   lines.push('- Anything about your live website or server');
   for (const g of result.coverage?.gaps ?? []) lines.push(`- ${g}`);
   lines.push('');

@@ -3,7 +3,11 @@ import assert from 'node:assert/strict';
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { coverageGaps, isComposeFile, projectCoverage, ruleLanguages } from '../src/coverage.js';
+import { coverageGaps, isComposeFile, NOT_LOOKED_FOR, projectCoverage, ruleLanguages, ruleSummaries } from '../src/coverage.js';
+
+// The line that says how few code rules ran: other tests here are about something else, so they leave it out.
+const FEW_RULES = /^Code rules: .* code was checked with only /;
+const otherGaps = (cov) => coverageGaps(cov).filter((g) => !FEW_RULES.test(g));
 import { BASIC_SCANNERS } from '../src/scan.js';
 
 function project(files) {
@@ -37,7 +41,7 @@ test('coverage: a PHP project says its code was not checked', () => {
       { language: 'javascript', files: 1, code_rules: true },
     ]);
     assert.deepEqual(cov.lockfiles, [{ file: 'composer.lock', ecosystem: 'Packagist (PHP)', tested: true }]);
-    const gaps = coverageGaps(cov);
+    const gaps = otherGaps(cov);
     assert.equal(gaps.length, 1);
     assert.match(gaps[0], /php \(2 files\)/);
     assert.match(gaps[0], /docs\/ai-review-prompt\.md/);
@@ -46,11 +50,12 @@ test('coverage: a PHP project says its code was not checked', () => {
   }
 });
 
-test('coverage: a JavaScript project with an npm lockfile has no gaps', () => {
+test('coverage: a JavaScript project with an npm lockfile has no gaps but the few-rules line', () => {
   const root = project({ 'server.js': '', 'public/app.js': '', 'package-lock.json': '{}' });
   try {
     const cov = projectCoverage(root);
-    assert.deepEqual(coverageGaps(cov), []);
+    assert.deepEqual(otherGaps(cov), []);
+    assert.equal(coverageGaps(cov).length, 1);
     assert.deepEqual(cov.lockfiles.map((l) => l.file), ['package-lock.json']);
   } finally {
     rmSync(root, { recursive: true, force: true });
@@ -60,7 +65,7 @@ test('coverage: a JavaScript project with an npm lockfile has no gaps', () => {
 test('coverage: Vue components are reported, since the JavaScript rules do not read them', () => {
   const root = project({ 'src/App.vue': '', 'src/main.ts': '' });
   try {
-    const gaps = coverageGaps(projectCoverage(root));
+    const gaps = otherGaps(projectCoverage(root));
     assert.equal(gaps.length, 1);
     assert.match(gaps[0], /vue \(1 file\)/);
   } finally {
@@ -108,7 +113,7 @@ test('coverage: a Dockerfile without Compose is not a gap', () => {
   try {
     const cov = projectCoverage(root);
     assert.deepEqual(cov.compose, []);
-    assert.deepEqual(coverageGaps(cov), []);
+    assert.deepEqual(otherGaps(cov), []);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
@@ -125,4 +130,67 @@ test('coverage: Compose files inside node_modules are not counted', () => {
 
 test('scan: trivy runs with the basic check', () => {
   assert.deepEqual(BASIC_SCANNERS.map((s) => s.id), ['gitleaks', 'osv-scanner', 'opengrep', 'trivy']);
+});
+
+test('coverage: every rule a user can get a finding from has a summary for the report', () => {
+  const rules = ruleSummaries();
+  assert.ok(rules.length >= 4);
+  for (const r of rules) {
+    assert.ok(r.summary, `${r.id} has no metadata.summary`);
+    assert.ok(r.languages.length, `${r.id} has no languages`);
+  }
+  assert.ok(!rules.some((r) => r.id === 'nestjs-global-throttler'), 'internal helper rules are left out');
+});
+
+test('coverage: a TypeScript project is told how few code rules ran and what was not looked for', () => {
+  const root = project({ 'src/server.ts': '', 'src/db.ts': '', 'package-lock.json': '{}' });
+  try {
+    const cov = projectCoverage(root);
+    const all = ruleSummaries().filter((r) => r.languages.includes('typescript'));
+    assert.deepEqual(cov.code_rules.map((r) => r.id), all.map((r) => r.id));
+    const gap = coverageGaps(cov).find((g) => FEW_RULES.test(g));
+    assert.ok(gap, 'a few-rules gap');
+    assert.match(gap, new RegExp(`^Code rules: typescript code was checked with only ${all.length} rules from this kit: `));
+    for (const r of all) assert.ok(gap.includes(r.summary), r.id);
+    for (const item of NOT_LOOKED_FOR) assert.ok(gap.includes(item), item);
+    // Pinned: an item leaves this list only when a rule covers it, together with this test.
+    for (const word of ['SQL', 'shell commands', 'eval', 'XSS', 'redirects', 'file lists', 'MD5']) assert.ok(gap.includes(word), word);
+    assert.match(gap, /"0 findings" says nothing about them/);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('coverage: a JavaScript-only project is not told about TypeScript-only rules', () => {
+  const root = project({ 'server.js': '', 'package-lock.json': '{}' });
+  try {
+    const cov = projectCoverage(root);
+    assert.ok(cov.code_rules.length > 0);
+    assert.ok(!cov.code_rules.some((r) => r.id === 'nestjs-route-no-throttle'));
+    assert.match(coverageGaps(cov)[0], /^Code rules: javascript code was checked with only /);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('coverage: a project with no code in a ruled language gets no few-rules line', () => {
+  const root = project({ 'app.py': '', 'requirements.txt': '' });
+  try {
+    const cov = projectCoverage(root);
+    assert.deepEqual(cov.code_rules, []);
+    assert.ok(!coverageGaps(cov).some((g) => FEW_RULES.test(g)));
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('coverage: Solidity files are named as not checked instead of passing in silence', () => {
+  const root = project({ 'contracts/Bank.sol': '', 'contracts/Token.sol': '', 'server.js': '', 'package-lock.json': '{}' });
+  try {
+    const cov = projectCoverage(root);
+    assert.deepEqual(cov.languages.find((l) => l.language === 'solidity'), { language: 'solidity', files: 2, code_rules: false });
+    assert.match(coverageGaps(cov)[0], /no rules yet for solidity \(2 files\)/);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
 });
