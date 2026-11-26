@@ -154,7 +154,8 @@ test('coverage: a TypeScript project is told how few code rules ran and what was
     for (const r of all) assert.ok(gap.includes(r.summary), r.id);
     for (const item of NOT_LOOKED_FOR) assert.ok(gap.includes(item), item);
     // Pinned: an item leaves this list only when a rule covers it, together with this test.
-    for (const word of ['SQL', 'shell commands', 'eval', 'XSS', 'redirects', 'file lists', 'MD5']) assert.ok(gap.includes(word), word);
+    for (const word of ['in another file', 'NoSQL', 'shell commands', 'eval', 'XSS', 'redirects', 'file lists', 'MD5']) assert.ok(gap.includes(word), word);
+    assert.match(gap, /SQL text built from request values/);
     assert.match(gap, /"0 findings" says nothing about them/);
   } finally {
     rmSync(root, { recursive: true, force: true });

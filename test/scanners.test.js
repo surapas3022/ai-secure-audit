@@ -85,7 +85,8 @@ test('opengrep: local rules only, rule test files and installed code are never s
   assert.ok(args.includes('--disable-version-check'));
   assert.ok(args[args.indexOf('--config') + 1].endsWith('rules/') || args[args.indexOf('--config') + 1].endsWith('rules\\'));
   const excluded = args.filter((a, i) => args[i - 1] === '--exclude');
-  for (const x of ['node_modules', 'express-route-no-rate-limit.js', 'nestjs-route-no-throttle.ts', 'express-vote-route-no-identity.js', 'express-session-lookup-plain-object.js']) assert.ok(excluded.includes(x), x);
+  for (const x of ['node_modules', 'express-route-no-rate-limit.js', 'nestjs-route-no-throttle.ts', 'express-vote-route-no-identity.js', 'express-session-lookup-plain-object.js', 'sql-built-from-request.ts']) assert.ok(excluded.includes(x), x);
+  assert.ok(args.includes('--taint-intrafile'));
 });
 
 test('opengrep: internal rules are never shown, and drop the findings that name them in suppressed-by', () => {
@@ -107,4 +108,11 @@ test('osv-scanner: the fix version ignores GIT ranges (commit hashes)', () => {
     groups: [{ ids: ['PYSEC-2018-28'], aliases: ['CVE-2018-18074'], max_severity: '9.8' }],
   }] }] };
   assert.match(osv.parse(json, ctx)[0].fix, /^Upgrade requests to 2\.20\.0 or later/);
+});
+
+test('opengrep: several taint paths to one line are one finding', () => {
+  const r = (line, col) => ({ check_id: 'x.rules.sql-built-from-request', path: '/tmp/asa-fixture/a.ts', start: { line, col },
+    extra: { message: 'T. Fix.', severity: 'ERROR', metadata: {}, lines: 'db.query(x)' } });
+  const got = opengrep.parse({ results: [r(5, 1), r(5, 1), r(5, 9), r(7, 1)] }, ctx);
+  assert.deepEqual(got.map((f) => f.evidence[0].location), ['a.ts:5', 'a.ts:7']);
 });

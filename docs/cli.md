@@ -79,6 +79,16 @@ Options: `--report simple` (also write `report-simple.md`, a short to-do list in
   one of those names passes. Not matched when the token is hashed first, upper-cased, checked with `Object.hasOwn`, or
   the store is a `Map` or `Object.create(null)`. Only a lookup tested directly (in an `if`, a ternary, `!` or `in`)
   and stores named like sessions, tokens, admins or keys; a lookup stored in a variable and tested later is missed.
+- `sql-built-from-request` (high, not released yet): a value from the request (`req.body`, `req.query`, `req.params`,
+  cookies, headers, NestJS `@Body`/`@Query`/`@Param`/`@Headers` parameters, `await request.json()`, Next.js
+  `searchParams`) that reaches the SQL text of a raw query: `query`, `execute`, `raw`, `all`, `get`, `run`, `exec` or
+  `prepare` on a receiver named like a database handle (`db`, `pool`, `client`, `sequelize`, `knex`, `dataSource` ...),
+  Prisma `$queryRawUnsafe`/`$executeRawUnsafe`, or `Prisma.raw`. A taint rule: it follows the value through variables
+  and into a helper function in the same file (opengrep runs with `--taint-intrafile`). Not matched when the value is
+  sent apart from the SQL (a placeholder with a values array, Sequelize `replacements`, tagged `prisma.$queryRaw`),
+  passed through `Number`, `parseInt`, `parseFloat` or an `escape` function, or used only to build `?` placeholders.
+  **Missed:** SQL built in another file from a function parameter (a `db.js` helper called from a route file), which
+  is a common layout; query builders other than the calls above; NoSQL.
 - **What was not checked.** The CLI counts source files by extension and lists lockfiles (skipping installed and
   generated folders), then writes `coverage` into `findings.json`: each language with its file count and whether this
   kit has code rules for it (taken from the `languages:` of the rule files), the rules that apply to those languages

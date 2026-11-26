@@ -22,9 +22,10 @@ export default {
 
   // Local rules only, no version check: nothing about the project leaves the machine.
   // --no-git-ignore: code that is not committed yet is still code that will run.
+  // --taint-intrafile: follow a request value into a helper function in the same file (sql-built-from-request).
   args(ctx, out) {
     return ['scan', '--config', RULES, '--json', '--output', out, '--disable-version-check', '--quiet',
-      '--no-git-ignore', ...[...EXCLUDE, ...RULE_TESTS].flatMap((d) => ['--exclude', d]), ctx.root];
+      '--no-git-ignore', '--taint-intrafile', ...[...EXCLUDE, ...RULE_TESTS].flatMap((d) => ['--exclude', d]), ctx.root];
   },
 
   okExit: [0],
@@ -36,11 +37,16 @@ export default {
     // throttle registered for the whole app), and a rule with suppressed-by: <id> is dropped when that rule matched.
     const seen = new Set(results.filter((r) => r.extra?.metadata?.internal).map((r) => r.ruleId));
     const findings = [];
+    // A taint rule reports one result per path from a source to the same line (three request values in one query
+    // give three results): one line is one finding.
+    const done = new Set();
     for (const r of results) {
       const meta = r.extra?.metadata ?? {};
       if (meta.internal || (meta['suppressed-by'] && seen.has(meta['suppressed-by']))) continue;
       const ruleId = r.ruleId;
       const location = `${rel(ctx.root, r.path)}:${r.start.line}`;
+      if (done.has(`${ruleId}:${location}`)) continue;
+      done.add(`${ruleId}:${location}`);
       const [title, ...rest] = (r.extra?.message ?? ruleId).split('. ');
       findings.push({
         fingerprint: `opengrep:${ruleId}:${location}`,
