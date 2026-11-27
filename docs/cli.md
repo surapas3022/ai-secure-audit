@@ -79,7 +79,7 @@ Options: `--report simple` (also write `report-simple.md`, a short to-do list in
   one of those names passes. Not matched when the token is hashed first, upper-cased, checked with `Object.hasOwn`, or
   the store is a `Map` or `Object.create(null)`. Only a lookup tested directly (in an `if`, a ternary, `!` or `in`)
   and stores named like sessions, tokens, admins or keys; a lookup stored in a variable and tested later is missed.
-- `sql-built-from-request` (high, not released yet): a value from the request (`req.body`, `req.query`, `req.params`,
+- `sql-built-from-request` (high, 0.0.16): a value from the request (`req.body`, `req.query`, `req.params`,
   cookies, headers, NestJS `@Body`/`@Query`/`@Param`/`@Headers` parameters, `await request.json()`, Next.js
   `searchParams`) that reaches the SQL text of a raw query: `query`, `execute`, `raw`, `all`, `get`, `run`, `exec` or
   `prepare` on a receiver named like a database handle (`db`, `pool`, `client`, `sequelize`, `knex`, `dataSource` ...),
@@ -91,7 +91,7 @@ Options: `--report simple` (also write `report-simple.md`, a short to-do list in
   `sqlite`, `stmt`): an HTTP client's `client.get(url)` was reported as SQL before.
   **Missed:** SQL built in another file from a function parameter (see the next rule); query builders other than
   the calls above; NoSQL; a client with a short name such as `c` (`c.query(...)`).
-- `sql-built-from-parameter` (medium, not released yet): the other half of the SQL check, for a db helper in its own
+- `sql-built-from-parameter` (medium, 0.0.16): the other half of the SQL check, for a db helper in its own
   file. A parameter of the function written straight into the SQL text as a value: inside quotes (`'${email}'`,
   `"= '" + name`) or right after `=`, `<`, `>`, `IN (`, `ORDER BY`, `LIMIT`, `OFFSET`; followed through variables
   into the same calls as `sql-built-from-request`. Dropped where that rule already reports the same line. Not
@@ -99,7 +99,7 @@ Options: `--report simple` (also write `report-simple.md`, a short to-do list in
   which in the apps tried was fixed text the caller wrote (21 false findings before this limit, 1 after).
   **Missed or wrong:** it cannot see the callers, so a parameter that only holds a value from the code itself is
   reported too; column names from an object's keys (`SET ${sets.join()}`) are missed.
-- `js-html-from-user-text` (medium, not released yet): text people type put into HTML without escaping. Judged by
+- `js-html-from-user-text` (medium, 0.0.16): text people type put into HTML without escaping. Judged by
   the field's name (`name`, `title`, `text`, `comment`, `message`, `description`, `content`, `bio`, ... and `value`,
   `query`): a field placed straight into a template literal that has a tag, or joined by `+` into `innerHTML`,
   `outerHTML`, `insertAdjacentHTML`, `document.write`, jQuery `.html/.append/.prepend` (on `$(...)`, `jQuery(...)` or
@@ -111,7 +111,7 @@ Options: `--report simple` (also write `report-simple.md`, a short to-do list in
   **Missed or wrong:** text kept under other field names, a value passed through other variables, and HTML built in
   `.vue`, `.svelte` or template files. Known false findings: a boolean flag named like text (`aria-pressed="${c.text}"`),
   labels the app wrote in its own array, and tag-like text that is not HTML (an AI prompt with `<doc title="...">`).
-- `js-code-from-text` (high, not released yet): text run as JavaScript code. `eval` (or `window`/`globalThis`
+- `js-code-from-text` (high, 0.0.16): text run as JavaScript code. `eval` (or `window`/`globalThis`
   `.eval`) of anything but a string literal; `new Function` or `Function` whose body is not a string literal;
   `setTimeout` or `setInterval` whose first argument is a string built with `+` or a template; Node `vm`
   (`runInContext`, `runInNewContext`, `runInThisContext`, `compileFunction`, `new vm.Script`) with code that is not a
